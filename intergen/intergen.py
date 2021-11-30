@@ -98,10 +98,12 @@ class Pl0Tree(Transformer):
 
     @v_args(inline=False)
     def term(self, factors):
+        "只处理了含有一个项的情况"
         return factors[0]
 
     @v_args(inline=False)
     def expression(self, terms):
+        "只处理了含有一个项的情况"
         return terms[0]
 
 

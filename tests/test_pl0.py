@@ -10,3 +10,9 @@ def test_assign(parser):
     result = parser(code)
     assert len(result) == 1
     assert result[0] == 'a := b'
+
+def test_expression(parser):
+    "来自讲义随堂练习"
+    code = "a := b * (-c+d)"
+    result = parser(code)
+    assert result == ['temp_1 := -c', 'temp2 := temp_1 + d', 'temp_3 := b * temp_2', 'a := temp3']
