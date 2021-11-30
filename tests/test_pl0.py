@@ -6,6 +6,7 @@ def parser():
     return get_parser()
 
 def test_assign(parser):
+    "最简单的assign"
     code = "a := b"
     result = parser(code)
     assert len(result) == 1
