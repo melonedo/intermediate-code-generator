@@ -32,3 +32,13 @@ jobs:
       - name: Run test suite
         run: |
           pipenv run test -v
+      
+      - name: Generate coverage report
+        run: |
+          pipenv run pytest --cov=./ --cov-report=xml
+
+      - name: "Upload coverage to Codecov"
+        uses: codecov/codecov-action@v2
+        with:
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
