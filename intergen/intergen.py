@@ -73,6 +73,18 @@ class Pl0Tree(Transformer):
         self.codes.append(code)
 
     def start(self, _):
+    def makelist(self, args):
+        return [*args]
+    
+    def merge(self, l1, l2):
+        return [*l1, *l2]
+
+    def backpatch(self, truelist, quad):
+        for i in truelist:
+            old_code = self.code[i]
+            new_code = old_code[:-1] + str(quad)
+            self.code[i] = new_code
+
         return self.codes
 
     def id(self, s):
