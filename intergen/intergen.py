@@ -125,10 +125,14 @@ class Pl0Tree(Transformer):
 
     def expression_add(self,e1,e2):
         e = struct()
+        e.place = self.newtemp()
+        self.emit(f"{e.place} := {e1.place} + {e2.place}")
     
     def expression_negative(self,e1):
         e = struct()
+        e.place = self.newtemp()
         self.emit(f"{e.place} := uminus {e1.place}")
+        
 
 
 def get_parser(transform=True):
