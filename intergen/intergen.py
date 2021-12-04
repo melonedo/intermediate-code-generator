@@ -3,11 +3,16 @@ from lark import Lark, Transformer, v_args
 
 "简化版，只包含生成代码的语法。非常不完全，自行添加需要的语法。"
 pl0_grammar3 = """
-    start: s
+    start: stmt
+    
+    ?stmt: s | open_stmt
 
-    s:  "if"i b "then"i m s n "else"i m s
-        | a
+    s:  "if"i b "then"i m s n "else"i m s   -> s_if_else
+        | a                                 -> s_a
         | "{" l "}"
+
+    open_stmt: "if"i b "then"i m stmt               -> s_if
+        | "if"i b "then"i m s n "else"i m open_stmt -> s_if_else_open
 
     a:  id ":=" expression
     
@@ -31,6 +36,7 @@ pl0_grammar3 = """
     b:  b "and"i m b
         | expression relop expression
         | "(" b ")"
+        | expression            -> bool_expression
 
     l:  l ";" m s
         | s
@@ -77,7 +83,7 @@ class Pl0Tree(Transformer):
         self.next_quad += 1
         self.codes.append(code)
 
-    def makelist(self, args):
+    def makelist(self, *args):
         return [*args]
     
     def merge(self, l1, l2):
@@ -85,16 +91,16 @@ class Pl0Tree(Transformer):
 
     def backpatch(self, truelist, quad):
         for i in truelist:
-            old_code = self.code[i]
+            old_code = self.codes[i]
             new_code = old_code[:-1] + str(quad)
-            self.code[i] = new_code
+            self.codes[i] = new_code
     
     def newtemp(self):
         return f"temp{self.symbol_counter}"
 
     def start(self, s):
         # 由于某些代码还没有nextlist，先不启用
-        # self.backpatch(s.nextlist, self.next_quad)
+        self.backpatch(s.nextlist, self.next_quad)
         return self.codes
 
     def id(self, s):
@@ -133,6 +139,47 @@ class Pl0Tree(Transformer):
         e.place = self.newtemp()
         self.emit(f"{e.place} := uminus {e1.place}")
         
+    @v_args(inline=False)
+    def expression(self, terms):
+        "只处理了含有一个项的情况"
+        return terms[0]
+    
+    def bool_expression(self, i):
+        b = struct()
+        b.truelist = self.makelist(self.next_quad)
+        b.falselist = self.makelist(self.next_quad + 1)
+        self.emit(f"jnz, {i.place}, -, 0")
+        self.emit(f"j, -, -, 0")
+        return b
+
+    def s_if(self, b, m, s1):
+        s = struct()
+        self.backpatch(b.truelist, m.quad)
+        s.nextlist = self.merge(b.falselist, s1.nextlist)
+        return s
+    
+    def s_if_else(self, b, m1, s1, n, m2, s2):
+        s = struct()
+        self.backpatch(b.truelist, m1.quad)
+        self.backpatch(b.falselist, m2.quad)
+        s.nextlist = self.merge(s1.nextlist, self.merge(s2.nextlist, n.nextlist))
+        return s
+
+    def s_a(self, a):
+        s = struct()
+        s.nextlist = self.makelist()
+        return s
+
+    def m(self):
+        m = struct()
+        m.quad = self.next_quad
+        return m
+    
+    def n(self):
+        n = struct()
+        n.nextlist = self.makelist(self.next_quad)
+        self.emit(f"j, -, -, 0")
+        return n
 
 
 def get_parser(transform=True):
