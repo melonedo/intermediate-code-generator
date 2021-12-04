@@ -10,8 +10,13 @@ pl0_grammar3 = """
         | "{" l "}"
 
     a:  id ":=" expression
-
-    expression: [ "+"|"-"] term ( ("+"|"-") term)*
+    
+    expression: expression "+" expression        -> expression_add
+        | "-" expression                         -> expression_negative
+        | "("expression")"                       -> expression_brackets
+        | id                                     -> expression_assignment
+        | factor                                 -> expression_factor
+        | expression "*" factor                  -> expression_mutiply
 
     term: factor (("*"|"/") factor)*
 
@@ -101,10 +106,12 @@ class Pl0Tree(Transformer):
         "只处理了含有一个项的情况"
         return factors[0]
 
-    @v_args(inline=False)
-    def expression(self, terms):
-        "只处理了含有一个项的情况"
-        return terms[0]
+    def expression_add(self,e1,e2):
+        e = struct()
+    
+    def expression_negative(self,e1):
+        e = struct()
+        self.emit(f"{e.place} := uminus {e1.place}")
 
 
 def get_parser(transform=True):
