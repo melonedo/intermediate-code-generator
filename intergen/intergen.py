@@ -5,8 +5,9 @@ from lark import Lark, Transformer, v_args
 pl0_grammar3 = """
     start: s
 
-    s:  "if"i b "then"i m s n "else"i m s
-        | a
+    s:  "if"i b "then"i m s n "else"i m s   -> s_if_else
+        | "if"i b "then"i m s               -> s_if
+        | a                                 -> s_a
         | "{" l "}"
 
     a:  id ":=" expression
@@ -26,6 +27,7 @@ pl0_grammar3 = """
     b:  b "and"i m b
         | expression relop expression
         | "(" b ")"
+        | expression            -> bool_expression
 
     l:  l ";" m s
         | s
@@ -122,6 +124,21 @@ class Pl0Tree(Transformer):
     def expression(self, terms):
         "只处理了含有一个项的情况"
         return terms[0]
+    
+    def b_id(self, i):
+        b = struct()
+        b.falselist = self.makelist(self.next_quad)
+        b.truelist = self.makelist(self.next_quad + 1)
+        self.emit(f"jnz, {i.place}, -, 0")
+        self.emit(f"j, -, -, 0")
+
+    def s_if(self, b, m, s):
+        self.backpatch(b.truelist, m.quad)
+        s.nextlist = self.merge(b.falselist, s.nextlist)
+
+    def s_a(self, a):
+        s = struct()
+        s.nextlist = self.makelist()
 
 
 def get_parser(transform=True):
