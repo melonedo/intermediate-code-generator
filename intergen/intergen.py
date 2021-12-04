@@ -175,28 +175,38 @@ class Pl0Tree(Transformer):
         e = struct()
         e.place = self.newtemp()
         self.emit(f"{e.place} := {e1.place} + {e2.place}")
+        return e
     
     def expression_negative(self,e1):
         e = struct()
         e.place = self.newtemp()
         self.emit(f"{e.place} := uminus {e1.place}")
+        return e
 
     def expression_brackets(self,e1):
         e = struct()
         e.place = e1.place
+        return e
     
     def expression_assignment(self,id):
         e = struct()
         p = self.lookup(id.name)
         if p is not None:
             e.place = p
+            return e
         else:
             raise GrammarError()
-
-
     
+    def expression_factor(self,factor):
+        e = struct()
+        e.place = factor.place
+        return e
 
-
+    def expression_mutiply(self,e1,factor):
+        e = struct()
+        e.place = self.newtemp()
+        self.emit(f"{e.place} := {e1.place} * {factor.place}")
+        return e
 
 def get_parser(transform=True):
     transformer = Pl0Tree() if transform else None
