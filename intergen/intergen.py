@@ -16,18 +16,19 @@ pl0_grammar3 = """
 
     a:  id ":=" expression
     
-    expression: expression "+" expression        -> expression_add
-        | "-" expression                         -> expression_negative
-        | "("expression")"                       -> expression_brackets
-        | id                                     -> expression_assignment
-        | factor                                 -> expression_factor
-        | expression "*" factor                  -> expression_mutiply
 
-    term: factor (("*"|"/") factor)*
+    expression: negative                    -> expression_num
+        | expression "+" term               -> expression_add
 
-    factor: id                  -> factor1
-        | num
-        | "(" expression ")"
+    negative: term                          -> expression_num 
+        | "-" term                          -> expression_negative     
+
+    term: factor                            -> expression_num
+        | term "*" factor                   -> expression_mutiply
+
+    factor: id                              -> expression_id
+        | num                               -> expression_num
+        | "(" expression ")"                -> expression_brackets
 
     m:
 
@@ -69,7 +70,7 @@ class Pl0Tree(Transformer):
 
     def __init__(self):
         self.symbol_table = {}
-        self.symbol_counter = 0
+        self.symbol_counter = -1
         self.next_quad = 0
         self.codes = []
 
@@ -96,6 +97,7 @@ class Pl0Tree(Transformer):
             self.codes[i] = new_code
     
     def newtemp(self):
+        self.symbol_counter += 1
         return f"temp{self.symbol_counter}"
 
     def start(self, s):
@@ -115,7 +117,7 @@ class Pl0Tree(Transformer):
         else:
             raise GrammarError()
 
-    def factor1(self, id):
+    def expression_id(self, id):
         e = struct()
         p = self.lookup(id.name)
         if p is not None:
@@ -187,19 +189,10 @@ class Pl0Tree(Transformer):
         e = struct()
         e.place = e1.place
         return e
-    
-    def expression_assignment(self,id):
+
+    def expression_num(self,num):
         e = struct()
-        p = self.lookup(id.name)
-        if p is not None:
-            e.place = p
-            return e
-        else:
-            raise GrammarError()
-    
-    def expression_factor(self,factor):
-        e = struct()
-        e.place = factor.place
+        e.place = num.place
         return e
 
     def expression_mutiply(self,e1,factor):
