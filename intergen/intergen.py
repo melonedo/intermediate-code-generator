@@ -128,16 +128,6 @@ class Pl0Tree(Transformer):
     def term(self, factors):
         "只处理了含有一个项的情况"
         return factors[0]
-
-    def expression_add(self,e1,e2):
-        e = struct()
-        e.place = self.newtemp()
-        self.emit(f"{e.place} := {e1.place} + {e2.place}")
-    
-    def expression_negative(self,e1):
-        e = struct()
-        e.place = self.newtemp()
-        self.emit(f"{e.place} := uminus {e1.place}")
         
     @v_args(inline=False)
     def expression(self, terms):
@@ -180,6 +170,32 @@ class Pl0Tree(Transformer):
         n.nextlist = self.makelist(self.next_quad)
         self.emit(f"j, -, -, 0")
         return n
+    
+    def expression_add(self,e1,e2):
+        e = struct()
+        e.place = self.newtemp()
+        self.emit(f"{e.place} := {e1.place} + {e2.place}")
+    
+    def expression_negative(self,e1):
+        e = struct()
+        e.place = self.newtemp()
+        self.emit(f"{e.place} := uminus {e1.place}")
+
+    def expression_brackets(self,e1):
+        e = struct()
+        e.place = e1.place
+    
+    def expression_assignment(self,id):
+        e = struct()
+        p = self.lookup(id.name)
+        if p is not None:
+            e.place = p
+        else:
+            raise GrammarError()
+
+
+    
+
 
 
 def get_parser(transform=True):
