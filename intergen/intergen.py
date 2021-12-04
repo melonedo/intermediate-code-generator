@@ -65,14 +65,13 @@ class Pl0Tree(Transformer):
     def lookup(self, id):
         if id not in self.symbol_table:
             self.symbol_table[id] = id
-            self.symbol_counter += 1
+            # self.symbol_counter += 1
         return self.symbol_table[id]
 
     def emit(self, code):
         self.next_quad += 1
         self.codes.append(code)
 
-    def start(self, _):
     def makelist(self, args):
         return [*args]
     
@@ -84,7 +83,13 @@ class Pl0Tree(Transformer):
             old_code = self.code[i]
             new_code = old_code[:-1] + str(quad)
             self.code[i] = new_code
+    
+    def newtemp(self):
+        return f"temp{self.symbol_counter}"
 
+    def start(self, s):
+        # 由于某些代码还没有nextlist，先不启用
+        # self.backpatch(s.nextlist, self.next_quad)
         return self.codes
 
     def id(self, s):
