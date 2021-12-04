@@ -1,5 +1,5 @@
 from intergen.calculator import calc
-from intergen.intergen import get_parser
+from intergen.intergen import get_parser, get_tree_parser
 
 def test_calc():
     assert calc("a = 1+2") == 3
@@ -15,4 +15,10 @@ def test_pl0():
     """
     parse = get_parser(False)
     parse(code)
-    
+
+
+def test_pl0_to_tree():
+    code = "x := 1"
+    tree_parser = get_tree_parser()
+    tree = tree_parser(code)
+    assert tree == ('S', ('A', ('id', 'x'), ('num', '1')))

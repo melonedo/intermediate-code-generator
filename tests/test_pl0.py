@@ -1,19 +1,24 @@
-from intergen.intergen import get_parser
+from intergen.intergen import reduce, get_parser, get_tree_parser
 import pytest
 
 @pytest.fixture
 def parser():
     return get_parser()
 
-def test_assign(parser):
+@pytest.fixture
+def to_tree():
+    return get_tree_parser()
+
+
+def test_assign(to_tree):
     code = "a := b"
-    result = parser(code)
-    assert len(result) == 1
-    assert result[0] == 'a := b'
+    tree = to_tree(code)
+    result = reduce(tree)
+    assert result == ['a := b']
 
 @pytest.mark.xfail
-def test_expression(parser):
+def test_expression(to_tree):
     "来自讲义随堂练习"
     code = "a := b * (-c+d)"
-    result = parser(code)
+    result = reduce(to_tree(code))
     assert result == ['temp_1 := -c', 'temp2 := temp_1 + d', 'temp_3 := b * temp_2', 'a := temp3']
