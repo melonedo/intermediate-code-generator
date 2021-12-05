@@ -33,12 +33,12 @@ pl0_grammar3 = """
 
     b_and: b_not ("and"i m b_not)*   -> bool_and
 
-    b_not: b_comparison
+    b_not: b_comparison              -> bool_trans
         | "not"i b_comparison        -> bool_not
 
     b_comparison: expression relop expression  -> bool_expression_relop_expression
         | expression                           -> bool_expression
-        | "(" b_expr ")"
+        | "(" b_expr ")"                       -> bool_trans
 
     l:  l ";" m s
         | s
@@ -169,7 +169,7 @@ class Pl0Tree(Transformer):
         b.falselist = b1.truelist
         return b
     
-    def b_not(self, b1):
+    def bool_trans(self, b1):
         b = struct()
         b.truelist = b1.truelist
         b.falselist = b1.falselist
@@ -228,7 +228,7 @@ def get_parser(transform=True):
     return parser
 
 
-code = "if not a and b or c then b := c else b := d"
+code = "if not (1 + 1) then b := c"
 result = get_parser()(code)
 print(result)
 # ['jnz, a, -, 6', 'j, -, -, 2', 'jnz, b, -, 6', 'j, -, -, 4', 'b := c', 'j, -, -, 7', 'b := d']
