@@ -23,6 +23,11 @@ def test_expression2(parser):
     result = parser(code)
     assert result == ['temp0 := a + b', 'temp1 := c + d', 'temp2 := temp0 * temp1', 'temp3 := uminus temp2', 'temp4 := a + b', 'temp5 := temp4 + c', 'temp6 := temp3 + temp5', 'e := temp6']
 
+def test_expression3(parser):
+    "测试优先级"
+    code = "e := - a + b * c + d"
+    result = parser(code)
+    assert result == ['temp0 := uminus a', 'temp1 := b * c', 'temp2 := temp0 + temp1', 'temp3 := temp2 + d', 'e := temp3']
 
 def test_if_then(parser):
     code = "if a then b := c"
