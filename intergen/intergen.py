@@ -106,7 +106,7 @@ class Pl0Tree(Transformer):
     def a(self, id, E):
         p = self.lookup(id.name)
         if p is not None:
-            self.emit(f"{p} := {E.place}")
+            self.emit(f":=, {E.place}, -, {p}")
         else:
             raise GrammarError()
 
