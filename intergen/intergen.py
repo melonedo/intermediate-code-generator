@@ -16,6 +16,7 @@ pl0_grammar3 = """
 
     a:  id ":=" expression
 
+
     expression: [ "+"|"-"] term ( ("+"|"-") term)*
 
     term: factor (("*"|"/") factor)*
@@ -38,7 +39,7 @@ pl0_grammar3 = """
 
     id: CNAME
     num: INT
-    relop: "="|"#"|"<"|"<="|">"|">="
+    relop: "="|"<>"|"<"|"<="|">"|">="
 
     %import common.CNAME
     %import common.INT
@@ -106,7 +107,8 @@ class Pl0Tree(Transformer):
     def a(self, id, E):
         p = self.lookup(id.name)
         if p is not None:
-            self.emit(f"{p} := {E.place}")
+            # self.emit(f"{p} := {E.place}")
+            pass
         else:
             raise GrammarError()
 
@@ -145,9 +147,9 @@ class Pl0Tree(Transformer):
     
     def s_if_else(self, b, m1, s1, n, m2, s2):
         s = struct()
-        self.backpatch(b.truelist, m1.quad)
-        self.backpatch(b.falselist, m2.quad)
-        s.nextlist = self.merge(s1.nextlist, self.merge(s2.nextlist, n.nextlist))
+        # self.backpatch(b.truelist, m1.quad)
+        # self.backpatch(b.falselist, m2.quad)
+        # s.nextlist = self.merge(s1.nextlist, self.merge(s2.nextlist, n.nextlist))
         return s
 
     def s_a(self, a):

@@ -1,0 +1,3 @@
+[submodule "table_gen"]
+	path = table_gen
+	url = https://github.com/alexpizarroj/lalr1-table-generator.git
