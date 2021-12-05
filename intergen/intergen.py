@@ -17,9 +17,9 @@ pl0_grammar3 = """
     a:  id ":=" expression
 
 
-    expression: [ "+"|"-"] term ( ("+"|"-") term)*
+    expression: term 
 
-    term: factor (("*"|"/") factor)*
+    term: factor
 
     factor: id                  -> factor1
         | num
