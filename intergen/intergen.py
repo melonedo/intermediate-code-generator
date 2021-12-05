@@ -226,9 +226,3 @@ def get_parser(transform=True):
     pl0_parser = Lark(pl0_grammar3, parser='lalr', transformer=transformer)
     parser = pl0_parser.parse
     return parser
-
-
-code = "if not (1 + 1) then b := c"
-result = get_parser()(code)
-print(result)
-# ['jnz, a, -, 6', 'j, -, -, 2', 'jnz, b, -, 6', 'j, -, -, 4', 'b := c', 'j, -, -, 7', 'b := d']
