@@ -58,3 +58,8 @@ def test_expression1(parser):
     code = "a := i + j"
     result = parser(code)
     assert result == ['temp0 := i + j', 'a := temp0']
+
+def test_goto(parser):
+    code = "goto l"
+    result = parser(code)
+    assert result == ['jnz, -, -, l.addr']
