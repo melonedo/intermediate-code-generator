@@ -6,46 +6,36 @@ pl0_grammar3 = """
     start: stmt
     
     ?stmt: s | open_stmt
-
     s:  "if"i b "then"i m s n "else"i m s   -> s_if_else
         | a                                 -> s_a
         | "{" l "}"
+        |id: m s                            -> s_LAB_s
+        |"goto"i id                         -> s_goto
 
     open_stmt: "if"i b "then"i m stmt               -> s_if
         | "if"i b "then"i m s n "else"i m open_stmt -> s_if_else_open
-
     a:  id ":=" expression
     
-
     expression: negative                    -> expression_num
         | expression "+" term               -> expression_add
-
     negative: term                          -> expression_num 
         | "-" term                          -> expression_negative     
-
     term: factor                            -> expression_num
         | term "*" factor                   -> expression_mutiply
-
     factor: id                              -> expression_id
         | num                               -> expression_num
         | "(" expression ")"                -> expression_brackets
-
     m:
-
     n:
-
     b:  b "and"i m b
         | expression relop expression
         | "(" b ")"
         | expression            -> bool_expression
-
-    l:  l ";" m s
+    l:  l ";" m s              "语句序列"
         | s
-
     id: CNAME
     num: INT
     relop: "="|"#"|"<"|"<="|">"|">="
-
     %import common.CNAME
     %import common.INT
     %import common.WS
@@ -200,11 +190,47 @@ class Pl0Tree(Transformer):
         e.place = self.newtemp()
         self.emit(f"{e.place} := {e1.place} * {factor.place}")
         return e
+    
+    def s_goto(self, id):
+        if entry(id.name).type == '未知':
+            fill(entry(id.name),'标号','未定义',next_quad)
+            self.emit(f"j, -, -, 0")
+        elif entry(id.name).type == '标号':
+            self.emit(f"j, -, -, {entry(id).addr}")
+            if entry(id.name).define == '未定义':
+                fill(entry(id.name),'标号','未定义',next_quad-1)
+                end if
+            else GrammarError
+            end if
+        end if
+        # if l in self.label_table:
+        #     entry = self.label_table[l]
+        #     if entry.isdefined=="已":
+        #         self.emit(f"j, -, -, {entry.place}")
+        #     elif  entry.isdefined=="未":
+        #         e = struct()
+        #         e.place = entry.place
+        #         entry.place=l.quad
+        #          self.emit(f"j, -, -, e.place")
+        # elif l not in self.label_table:
+        #         self.label_table[l] = l
+        #         self.label_table[l].isdefined="未"
+        #         self.label_table[l].place=l.quad；
+        #         self.emit(f"j, -, -, 0")
 
-def get_parser(transform=True):
-    transformer = Pl0Tree() if transform else None
-    pl0_parser = Lark(pl0_grammar3, parser='lalr', transformer=transformer)
-    parser = pl0_parser.parse
-    return parser
+    def s_LAB_s(self, id):
+        if entry(id.name).type == '未知':
+            fill(entry(id.name),'标号','已定义',next_quad)
+        elif entry(id.name).type == '标号' and entry(id.name).define == '未定义':
+            q = entry(id.name).addr
+            fill(entry(id.name),'标号','已定义',next_quad)
+            backpatch(q,next_quad)
+            else GrammarError
+            end if
+        end if
 
-
+    def get_parser(transform=True):
+        transformer = Pl0Tree() if transform else None
+        pl0_parser = Lark(pl0_grammar3, parser='lalr', transformer=transformer)
+        parser = pl0_parser.parse
+        return parser
