@@ -201,6 +201,7 @@ class Pl0Tree(Transformer):
                 fill(entry(id.name),'标号','未定义',next_quad-1)
             else :
                 GrammarError
+        return
         # if l in self.label_table:
         #     entry = self.label_table[l]
         #     if entry.isdefined=="已":
@@ -225,10 +226,11 @@ class Pl0Tree(Transformer):
             backpatch(q,next_quad)
         else :
             GrammarError
+        return
 
 
-    def get_parser(transform=True):
-        transformer = Pl0Tree() if transform else None
-        pl0_parser = Lark(pl0_grammar3, parser='lalr', transformer=transformer)
-        parser = pl0_parser.parse
-        return parser
+def get_parser(transform=True):
+    transformer = Pl0Tree() if transform else None
+    pl0_parser = Lark(pl0_grammar3, parser='lalr', transformer=transformer)
+    parser = pl0_parser.parse
+    return parser
