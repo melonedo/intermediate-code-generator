@@ -199,10 +199,8 @@ class Pl0Tree(Transformer):
             self.emit(f"j, -, -, {entry(id).addr}")
             if entry(id.name).define == '未定义':
                 fill(entry(id.name),'标号','未定义',next_quad-1)
-                end if
-            else GrammarError
-            end if
-        end if
+            else :
+                GrammarError
         # if l in self.label_table:
         #     entry = self.label_table[l]
         #     if entry.isdefined=="已":
@@ -225,9 +223,9 @@ class Pl0Tree(Transformer):
             q = entry(id.name).addr
             fill(entry(id.name),'标号','已定义',next_quad)
             backpatch(q,next_quad)
-            else GrammarError
-            end if
-        end if
+        else :
+            GrammarError
+
 
     def get_parser(transform=True):
         transformer = Pl0Tree() if transform else None
