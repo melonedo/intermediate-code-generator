@@ -9,7 +9,7 @@ pl0_grammar3 = """
     s:  "if"i b "then"i m s n "else"i m s   -> s_if_else
         | a                                 -> s_a
         | "{" l "}"
-        |id: m s                            -> s_LAB_s
+        |l m s                              -> s_label
         |"goto"i id                         -> s_goto
 
     open_stmt: "if"i b "then"i m stmt               -> s_if
@@ -217,12 +217,12 @@ class Pl0Tree(Transformer):
         #         self.label_table[l].place=l.quad；
         #         self.emit(f"j, -, -, 0")
 
-    def s_LAB_s(self, id):
-        if entry(id.name).type == '未知':
-            fill(entry(id.name),'标号','已定义',next_quad)
-        elif entry(id.name).type == '标号' and entry(id.name).define == '未定义':
-            q = entry(id.name).addr
-            fill(entry(id.name),'标号','已定义',next_quad)
+    def s_label(self, l):
+        if entry(l.name).type == '未知':
+            fill(entry(l.name),'标号','已定义',next_quad)
+        elif entry(l.name).type == '标号' and entry(l.name).define == '未定义':
+            q = entry(l.name).addr
+            fill(entry(l.name),'标号','已定义',next_quad)
             backpatch(q,next_quad)
         else :
             GrammarError
