@@ -8,8 +8,9 @@ pl0_grammar3 = """
     ?stmt: s | open_stmt
 
     s:  "if"i b_expr "then"i m s n "else"i m s   -> s_if_else
-        | a                                 -> s_a
+        | a                                      -> s_a
         | "{" l "}"
+        | "while"i m b_expr "do"i m s            -> s_while
 
     open_stmt: "if"i b_expr "then"i m stmt               -> s_if
         | "if"i b_expr "then"i m s n "else"i m open_stmt -> s_if_else_open
@@ -244,6 +245,14 @@ class Pl0Tree(Transformer):
         e.place = self.newtemp()
         self.emit(f"{e.place} := {e1.place} * {factor.place}")
         return e
+
+    def s_while(self, m1, b, m2, s1):
+        s = struct()
+        self.backpatch(s1.nextlist, m1.quad)
+        self.backpatch(b.truelist, m2.quad)
+        s.nextlist = b.falselist
+        self.emit(f"j, -, -, {m1.quad}")
+        return s
 
 def get_parser(transform=True):
     transformer = Pl0Tree() if transform else None

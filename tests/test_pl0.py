@@ -94,3 +94,13 @@ def test_bool_expression(parser):
     code = "if not (-a + b) * c and (d or a + b > d + e) then b := c"
     result = parser(code)
     assert result == ['temp0 := uminus a', 'temp1 := temp0 + b', 'temp2 := temp1 * c', 'jnz, temp2, -, 12', 'j, -, -, 5', 'jnz, d, -, 11', 'j, -, -, 7', 'temp3 := a + b', 'temp4 := d + e', 'j>, temp3, temp4, 11', 'j, -, -, 12', 'b := c']
+
+def test_while(parser):
+    code = "while a<b do a:=b"
+    result = parser(code)
+    assert result == ['j<, a, b, 2', 'j, -, -, 4', 'a := b', 'j, -, -, 0']
+
+def test_while_nested(parser):
+    code = "while a do while a do a := a + (-a)"
+    result = parser(code)
+    assert result == ['jnz, a, -, 2', 'j, -, -, 9', 'jnz, a, -, 4', 'j, -, -, 0', 'temp0 := uminus a', 'temp1 := a + temp0', 'a := temp1', 'j, -, -, 2', 'j, -, -, 0']
