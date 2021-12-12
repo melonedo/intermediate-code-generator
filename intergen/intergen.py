@@ -1,51 +1,57 @@
 from lark import Lark, Transformer, v_args
 
+
 "简化版，只包含生成代码的语法。非常不完全，自行添加需要的语法。"
 pl0_grammar3 = """
     start: stmt
 
     ?stmt: s | open_stmt
-
-    s:  "if"i b "then"i m s n "else"i m s   -> s_if_else
+    
+    s:  "if"i b_expr "then"i m s n "else"i m s   -> s_if_else
         | a                                 -> s_a
         | "{" l "}"
-        | "while"i m b "do"i m s            -> s_while    
-
-    open_stmt: "if"i b "then"i m stmt               -> s_if
-        | "if"i b "then"i m s n "else"i m open_stmt -> s_if_else_open
-
+        | "while"i m b_expr "do"i m s            -> s_while
+        
+    open_stmt: "if"i b_expr "then"i m stmt               -> s_if
+        | "if"i b_expr "then"i m s n "else"i m open_stmt -> s_if_else_open
+        
     a:  id ":=" expression
-
 
     expression: negative                    -> expression_num
         | expression "+" term               -> expression_add
-
+        
     negative: term                          -> expression_num 
-        | "-" term                          -> expression_negative     
-
+        | "-" term                          -> expression_negative    
+         
     term: factor                            -> expression_num
         | term "*" factor                   -> expression_mutiply
-
+        
     factor: id                              -> expression_id
         | num                               -> expression_num
         | "(" expression ")"                -> expression_brackets
-
+        
     m:
-
+    
     n:
-
-    b:  b "and"i m b
-        | expression relop expression
-        | "(" b ")"
-        | expression            -> bool_expression
-
+    
+    b_expr: b_and ("or"i m b_and)*   -> bool_or
+    
+    b_and: b_not ("and"i m b_not)*   -> bool_and
+    
+    b_not: b_comparison              -> bool_trans
+        | "not"i b_comparison        -> bool_not
+        
+    b_comparison: expression relop expression  -> bool_expression_relop_expression
+        | expression                           -> bool_expression
+        | "(" b_expr ")"                       -> bool_trans
+        
     l:  l ";" m s
         | s
-
+        
     id: CNAME
     num: INT
-    relop: "="|"#"|"<"|"<="|">"|">="
-
+    !relop: "="|"<>"|"<"|"<="|">"|">="
+    
     %import common.CNAME
     %import common.INT
     %import common.WS
@@ -127,15 +133,52 @@ class Pl0Tree(Transformer):
         else:
             raise GrammarError()
 
-    @v_args(inline=False)
-    def term(self, factors):
-        "只处理了含有一个项的情况"
-        return factors[0]
+    def relop(self, r):
+        e = struct()
+        e.op = r
+        return e
 
     @v_args(inline=False)
-    def expression(self, terms):
-        "只处理了含有一个项的情况"
-        return terms[0]
+    def bool_or(self, b_ands):
+        b1 = b_ands[0]
+        for m, b2 in [b_ands[i:i + 2] for i in range(1, len(b_ands), 2)]:
+            b = struct()
+            self.backpatch(b1.falselist, m.quad)
+            b.truelist = self.merge(b1.truelist, b2.truelist)
+            b.falselist = b2.falselist
+            b1 = b
+        return b1
+
+    @v_args(inline=False)
+    def bool_and(self, b_nots):
+        b1 = b_nots[0]
+        for m, b2 in [b_nots[i:i + 2] for i in range(1, len(b_nots), 2)]:
+            b = struct()
+            self.backpatch(b1.truelist, m.quad)
+            b.truelist = b2.truelist
+            b.falselist = self.merge(b1.falselist, b2.falselist)
+            b1 = b
+        return b1
+
+    def bool_not(self, b1):
+        b = struct()
+        b.truelist = b1.falselist
+        b.falselist = b1.truelist
+        return b
+
+    def bool_trans(self, b1):
+        b = struct()
+        b.truelist = b1.truelist
+        b.falselist = b1.falselist
+        return b
+
+    def bool_expression_relop_expression(self, e1, r, e2):
+        b = struct()
+        b.truelist = self.makelist(self.next_quad)
+        b.falselist = self.makelist(self.next_quad + 1)
+        self.emit(f"j{r.op}, {e1.place}, {e2.place}, 0")
+        self.emit(f"j, -, -, 0")
+        return b
 
     def bool_expression(self, i):
         b = struct()
@@ -209,7 +252,6 @@ class Pl0Tree(Transformer):
         s.nextlist = b.falselist
         self.emit(f"j, -, -, {m1.quad}")
         return s
-
 
 def get_parser(transform=True):
     transformer = Pl0Tree() if transform else None
