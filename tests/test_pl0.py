@@ -138,3 +138,8 @@ def test_while2(parser):
            ":= - ( a + b ) * ( c + d ) + ( a + b + c ) "
     result = parser(code)
     assert result == ['temp0 := a + b', 'temp1 := c * d', 'j<, temp0, temp1, 4', 'j, -, -, 29', 'temp2 := uminus a', 'temp3 := temp2 + b', 'temp4 := temp3 * c', 'jnz, temp4, -, 0', 'j, -, -, 9', 'jnz, d, -, 15', 'j, -, -, 11', 'temp5 := a + b', 'temp6 := d + e', 'j>, temp5, temp6, 15', 'j, -, -, 0', 'jnz, a, -, 19', 'j, -, -, 17', 'b := c', 'j, -, -, 4', 'temp7 := a + b', 'temp8 := c + d', 'temp9 := temp7 * temp8', 'temp10 := uminus temp9', 'temp11 := a + b', 'temp12 := temp11 + c', 'temp13 := temp10 + temp12', 'a := temp13', 'j, -, -, 4', 'j, -, -, 0']
+
+def test_call(parser):
+    code = "call f(a,b)"
+    result = parser(code)
+    assert result == ['param, a', 'param, b', 'call, f']

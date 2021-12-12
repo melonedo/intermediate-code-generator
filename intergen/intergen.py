@@ -11,13 +11,13 @@ pl0_grammar3 = """
         | a                                      -> s_a
         | "{" l "}"
         | "while"i m b_expr "do"i m s            -> s_while
+        | "call"i id "(" e_list ")"              -> s_call
 
     open_stmt: "if"i b_expr "then"i m stmt               -> s_if
         | "if"i b_expr "then"i m s n "else"i m open_stmt -> s_if_else_open
 
     a:  id ":=" expression
     
-
     expression: negative                    -> expression_num
         | expression "+" term               -> expression_add
 
@@ -35,7 +35,6 @@ pl0_grammar3 = """
 
     n:
 
-
     b_expr: b_and ("or"i m b_and)*   -> bool_or
 
     b_and: b_not ("and"i m b_not)*   -> bool_and
@@ -49,6 +48,9 @@ pl0_grammar3 = """
 
     l:  l ";" m s
         | s
+        
+    e_list: expression                   -> call_init     
+        | e_list "," expression          -> call_add
 
     id: CNAME
     num: INT
@@ -253,6 +255,22 @@ class Pl0Tree(Transformer):
         s.nextlist = b.falselist
         self.emit(f"j, -, -, {m1.quad}")
         return s
+
+    def s_call(self, id, e_list):
+        s = struct()
+        for p in e_list:
+            self.emit(f"param, {p}")
+        self.emit(f"call, {id.name}")
+        s.nextlist = []
+        return s
+
+    def call_add(self, e_list, e):
+        e_list.append(e.place)
+        return e_list
+
+    def call_init(self, e):
+        e_list = [e.place]
+        return e_list
 
 def get_parser(transform=True):
     transformer = Pl0Tree() if transform else None
