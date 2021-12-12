@@ -139,16 +139,6 @@ class Pl0Tree(Transformer):
         return e
 
     @v_args(inline=False)
-    def term(self, factors):
-        "只处理了含有一个项的情况"
-        return factors[0]
-        
-    @v_args(inline=False)
-    def expression(self, terms):
-        "只处理了含有一个项的情况"
-        return terms[0]
-
-    @v_args(inline=False)
     def bool_or(self, b_ands):
         b1 = b_ands[0]
         for m, b2 in [b_ands[i:i + 2] for i in range(1, len(b_ands), 2)]:
