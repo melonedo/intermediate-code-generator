@@ -259,8 +259,8 @@ class Pl0Tree(Transformer):
     def s_call(self, id, e_list):
         s = struct()
         for p in e_list:
-            self.emit(f"param, {p}")
-        self.emit(f"call, {id.name}")
+            self.emit(f"param {p}")
+        self.emit(f"call {id.name}")
         s.nextlist = []
         return s
 

@@ -142,4 +142,9 @@ def test_while2(parser):
 def test_call(parser):
     code = "call f(a,b)"
     result = parser(code)
-    assert result == ['param, a', 'param, b', 'call, f']
+    assert result == ['param a', 'param b', 'call f']
+
+def test_call2(parser):
+    code = "call f(a, x+y)"
+    result = parser(code)
+    assert result == ['temp0 := x + y', 'param a', 'param temp0', 'call f']
