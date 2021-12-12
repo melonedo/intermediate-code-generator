@@ -12,12 +12,22 @@ def test_assign(parser):
     assert len(result) == 1
     assert result[0] == 'a := b'
 
-@pytest.mark.xfail
 def test_expression(parser):
     "来自讲义随堂练习"
     code = "a := b * (-c+d)"
     result = parser(code)
-    assert result == ['temp_1 := -c', 'temp2 := temp_1 + d', 'temp_3 := b * temp_2', 'a := temp3']
+    assert result == ['temp0 := uminus c', 'temp1 := temp0 + d', 'temp2 := b * temp1', 'a := temp2']
+
+def test_expression2(parser):
+    code = "e := - ( a + b ) * ( c + d ) + ( a + b + c )"
+    result = parser(code)
+    assert result == ['temp0 := a + b', 'temp1 := c + d', 'temp2 := temp0 * temp1', 'temp3 := uminus temp2', 'temp4 := a + b', 'temp5 := temp4 + c', 'temp6 := temp3 + temp5', 'e := temp6']
+
+def test_expression3(parser):
+    "测试优先级"
+    code = "e := - a + b * c + d"
+    result = parser(code)
+    assert result == ['temp0 := uminus a', 'temp1 := b * c', 'temp2 := temp0 + temp1', 'temp3 := temp2 + d', 'e := temp3']
 
 def test_if_then(parser):
     code = "if a then b := c"
@@ -43,7 +53,12 @@ def test_nested_if_else2(parser):
     code = "if a then if b then c := d else e := f else g := h"
     result = parser(code)
     assert result == ['jnz, a, -, 2', 'j, -, -, 8', 'jnz, b, -, 4', 'j, -, -, 6', 'c := d', 'j, -, -, 9', 'e := f', 'j, -, -, 9', 'g := h']
-
+  
+def test_expression1(parser):
+    code = "a := i + j"
+    result = parser(code)
+    assert result == ['temp0 := i + j', 'a := temp0']
+    
 def test_bool_not(parser):
     code = "if not a > b then c := d"
     result = parser(code)

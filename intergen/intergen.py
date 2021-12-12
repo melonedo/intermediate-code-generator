@@ -15,14 +15,20 @@ pl0_grammar3 = """
         | "if"i b_expr "then"i m s n "else"i m open_stmt -> s_if_else_open
 
     a:  id ":=" expression
+    
 
-    expression: [ "+"|"-"] term ( ("+"|"-") term)*
+    expression: negative                    -> expression_num
+        | expression "+" term               -> expression_add
 
-    term: factor (("*"|"/") factor)*
+    negative: term                          -> expression_num 
+        | "-" term                          -> expression_negative     
 
-    factor: id                  -> factor1
-        | num
-        | "(" expression ")"
+    term: factor                            -> expression_num
+        | term "*" factor                   -> expression_mutiply
+
+    factor: id                              -> expression_id
+        | num                               -> expression_num
+        | "(" expression ")"                -> expression_brackets
 
     m:
 
@@ -71,7 +77,7 @@ class Pl0Tree(Transformer):
 
     def __init__(self):
         self.symbol_table = {}
-        self.symbol_counter = 0
+        self.symbol_counter = -1
         self.next_quad = 0
         self.codes = []
 
@@ -98,6 +104,7 @@ class Pl0Tree(Transformer):
             self.codes[i] = new_code
     
     def newtemp(self):
+        self.symbol_counter += 1
         return f"temp{self.symbol_counter}"
 
     def start(self, s):
@@ -117,7 +124,7 @@ class Pl0Tree(Transformer):
         else:
             raise GrammarError()
 
-    def factor1(self, id):
+    def expression_id(self, id):
         e = struct()
         p = self.lookup(id.name)
         if p is not None:
@@ -135,7 +142,7 @@ class Pl0Tree(Transformer):
     def term(self, factors):
         "只处理了含有一个项的情况"
         return factors[0]
-
+        
     @v_args(inline=False)
     def expression(self, terms):
         "只处理了含有一个项的情况"
@@ -219,7 +226,34 @@ class Pl0Tree(Transformer):
         n.nextlist = self.makelist(self.next_quad)
         self.emit(f"j, -, -, 0")
         return n
+    
+    def expression_add(self,e1,e2):
+        e = struct()
+        e.place = self.newtemp()
+        self.emit(f"{e.place} := {e1.place} + {e2.place}")
+        return e
+    
+    def expression_negative(self,e1):
+        e = struct()
+        e.place = self.newtemp()
+        self.emit(f"{e.place} := uminus {e1.place}")
+        return e
 
+    def expression_brackets(self,e1):
+        e = struct()
+        e.place = e1.place
+        return e
+
+    def expression_num(self,num):
+        e = struct()
+        e.place = num.place
+        return e
+
+    def expression_mutiply(self,e1,factor):
+        e = struct()
+        e.place = self.newtemp()
+        self.emit(f"{e.place} := {e1.place} * {factor.place}")
+        return e
 
 def get_parser(transform=True):
     transformer = Pl0Tree() if transform else None
