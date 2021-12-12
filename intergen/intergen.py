@@ -9,7 +9,7 @@ pl0_grammar3 = """
     s:  "if"i b "then"i m s n "else"i m s   -> s_if_else
         | a                                 -> s_a
         | "{" l "}"
-        |"l:" m s                              -> s_label
+        |label m s                          -> s_label_s                
         |"goto"i id                         -> s_goto
 
     open_stmt: "if"i b "then"i m stmt               -> s_if
@@ -25,13 +25,15 @@ pl0_grammar3 = """
     factor: id                              -> expression_id
         | num                               -> expression_num
         | "(" expression ")"                -> expression_brackets
+
+    label: id ":"                           -> s_label
     m:
     n:
     b:  b "and"i m b
         | expression relop expression
         | "(" b ")"
         | expression            -> bool_expression
-    l:  l ";" m s              "语句序列"
+    l:  l1 ";" m s              -> s_semicolon
         | s
     id: CNAME
     num: INT
@@ -190,45 +192,50 @@ class Pl0Tree(Transformer):
         e.place = self.newtemp()
         self.emit(f"{e.place} := {e1.place} * {factor.place}")
         return e
-    
+
+    def s_semicolon(self,l1,m,s):
+        self.backpatch(l1.nextlist,m.quad)
+        l.nextlist = s.nextlist
+
+
+    def s_label_s(self,s):
+        e = struct()
+        e.place = s.place
+        return e
+
     def s_goto(self, id):
-        # entry = self.symbol_table[id]
-        # if entry(id.name).type == '未知':
-        #     fill(entry(id.name),'标号','未定义',next_quad)
-        #     self.emit(f"j, -, -, 0")
-        # elif entry(id.name).type == '标号':
-        #     self.emit(f"j, -, -, {entry(id).addr}")
-        #     if entry(id.name).define == '未定义':
-        #         fill(entry(id.name),'标号','未定义',next_quad-1)
-        #     else :
-        #         GrammarError
-        # return
         if id in self.symbol_table:
             entry = self.symbol_table[id]
-            if entry.isdefined=="已":
-                self.emit(f"j, -, -, {entry.place}")
-            elif  entry.isdefined=="未":
+            if entry.isdefined=="已定义":
+                self.emit(f"j, -, -, {entry.addr}")
+            elif  entry.isdefined=="未定义":
                 e = struct()
-                e.place = entry.place
-                entry.place=id.quad
-                self.emit(f"j, -, -, e.place")
+                e.addr = entry.addr
+                entry.addr=self.next_quad
+                self.emit(f"j, -, -, e.addr")
         elif id not in self.symbol_table:
                 self.symbol_table[id] = id
-                self.symbol_table[id].isdefined="未"
-                self.symbol_table[id].place = self.next_quad ;
+                self.symbol_table[id].isdefined="未定义"
+                self.symbol_table[id].addr = self.next_quad
                 self.emit(f"j, -, -, 0")
         return
 
     def s_label(self, id):
-        entry = self.symbol_table[id]
-        if entry(id.name).type == '未知':
-            fill(entry(id.name),'标号','已定义',next_quad)
-        elif entry(id.name).type == '标号' and entry(id.name).define == '未定义':
-            q = entry(id.name).addr
-            fill(entry(id.name),'标号','已定义',next_quad)
-            backpatch(q,next_quad)
+        entry = self.lookup(id)
+        if entry(id).type == '未知':
+            self.symbol_table[id] = id
+            self.symbol_table[id].type="标号"
+            self.symbol_table[id].isdefined="已定义"
+            self.symbol_table[id].addr = self.next_quad
+        elif entry(id).type == '标号' and entry(id).define == '未定义':
+            q = entry(id).addr
+            self.symbol_table[id] = id
+            self.symbol_table[id].type="标号"
+            self.symbol_table[id].isdefined="已定义"
+            self.symbol_table[id].addr = self.next_quad
+            self.backpatch(q,self.next_quad)
         else :
-            GrammarError
+            Error
         return
 
 
