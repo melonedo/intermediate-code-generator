@@ -58,7 +58,7 @@ def test_expression1(parser):
     code = "a := i + j"
     result = parser(code)
     assert result == ['temp0 := i + j', 'a := temp0']
-    
+
 def test_bool_not(parser):
     code = "if not a > b then c := d"
     result = parser(code)
@@ -78,3 +78,8 @@ def test_bool(parser):
     code = "if not (a > b and c or d) or not e <> f and not g then h := i"
     result = parser(code)
     assert result == ['j>, a, b, 2', 'j, -, -, 4', 'jnz, c, -, 6', 'j, -, -, 4', 'jnz, d, -, 6', 'j, -, -, 10', 'j<>, e, f, 11', 'j, -, -, 8', 'jnz, g, -, 11', 'j, -, -, 10', 'h := i']
+
+def test_bool_expression(parser):
+    code = "if not (-a + b) * c and (d or a + b > d + e) then b := c"
+    result = parser(code)
+    assert result == ['temp0 := uminus a', 'temp1 := temp0 + b', 'temp2 := temp1 * c', 'jnz, temp2, -, 12', 'j, -, -, 5', 'jnz, d, -, 11', 'j, -, -, 7', 'temp3 := a + b', 'temp4 := d + e', 'j>, temp3, temp4, 11', 'j, -, -, 12', 'b := c']
