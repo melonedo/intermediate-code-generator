@@ -9,7 +9,7 @@ pl0_grammar3 = """
     s:  "if"i b "then"i m s n "else"i m s   -> s_if_else
         | a                                 -> s_a
         | "{" l "}"
-        |label m s                          -> s_label_s                
+        |label s                            -> s_label_s              
         |"goto"i id                         -> s_goto
 
     open_stmt: "if"i b "then"i m stmt               -> s_if
@@ -33,8 +33,9 @@ pl0_grammar3 = """
         | expression relop expression
         | "(" b ")"
         | expression            -> bool_expression
-    l:  l1 ";" m s              -> s_semicolon
-        | s
+    l:  l ";" m s               -> s_semicolon
+        | s                     -> s_semicolon_s
+        
     id: CNAME
     num: INT
     relop: "="|"#"|"<"|"<="|">"|">="
@@ -193,50 +194,57 @@ class Pl0Tree(Transformer):
         self.emit(f"{e.place} := {e1.place} * {factor.place}")
         return e
 
-    def s_semicolon(self,l1,m,s):
-        self.backpatch(l1.nextlist,m.quad)
+    def s_label_s(self,id,s):
+        return s
+
+    def s_semicolon(self,l,m,s):
+        self.backpatch(l.nextlist,m.quad)
         l.nextlist = s.nextlist
-
-
-    def s_label_s(self,s):
-        e = struct()
-        e.place = s.place
-        return e
+        return l
+    
+    def s_semicolon_s(self,s):
+        l = struct()
+        l.nextlist = s.nextlist
+        return l
 
     def s_goto(self, id):
+        s = struct()
         if id in self.symbol_table:
             entry = self.symbol_table[id]
             if entry.isdefined=="已定义":
-                self.emit(f"j, -, -, {entry.addr}")
+                self.emit(f"j, -, -, {entry.place}")
             elif  entry.isdefined=="未定义":
                 e = struct()
-                e.addr = entry.addr
-                entry.addr=self.next_quad
-                self.emit(f"j, -, -, e.addr")
-        elif id not in self.symbol_table:
+                e.place = entry.place
+                entry.place=self.next_quad
+                self.emit(f"j, -, -, e.place")
+        else:
                 self.symbol_table[id] = id
                 self.symbol_table[id].isdefined="未定义"
-                self.symbol_table[id].addr = self.next_quad
+                self.symbol_table[id].place = self.next_quad
                 self.emit(f"j, -, -, 0")
-        return
+        s.nextlist=[]
+        return s
 
     def s_label(self, id):
-        entry = self.lookup(id)
-        if entry(id).type == '未知':
+        label = struct()
+        if id not in self.symbol_table:
             self.symbol_table[id] = id
             self.symbol_table[id].type="标号"
             self.symbol_table[id].isdefined="已定义"
-            self.symbol_table[id].addr = self.next_quad
-        elif entry(id).type == '标号' and entry(id).define == '未定义':
-            q = entry(id).addr
-            self.symbol_table[id] = id
-            self.symbol_table[id].type="标号"
-            self.symbol_table[id].isdefined="已定义"
-            self.symbol_table[id].addr = self.next_quad
-            self.backpatch(q,self.next_quad)
+            self.symbol_table[id].place = self.next_quad
+        elif id in self.symbol_table:
+            entry = self.symbol_table[id]
+            if entry(id).type == '标号' and entry(id).define == '未定义':
+                q = entry(id).place
+                self.symbol_table[id] = id
+                self.symbol_table[id].type="标号"
+                self.symbol_table[id].isdefined="已定义"
+                self.symbol_table[id].place = self.next_quad
+                self.backpatch(q,self.next_quad)
         else :
             Error
-        return
+        return label
 
 
 def get_parser(transform=True):
