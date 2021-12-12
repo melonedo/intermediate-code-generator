@@ -43,3 +43,23 @@ def test_nested_if_else2(parser):
     code = "if a then if b then c := d else e := f else g := h"
     result = parser(code)
     assert result == ['jnz, a, -, 2', 'j, -, -, 8', 'jnz, b, -, 4', 'j, -, -, 6', 'c := d', 'j, -, -, 9', 'e := f', 'j, -, -, 9', 'g := h']
+
+def test_bool_not(parser):
+    code = "if not a > b then c := d"
+    result = parser(code)
+    assert result == ['j>, a, b, 3', 'j, -, -, 2', 'c := d']
+
+def test_bool_and(parser):
+    code = "if not a > b and c <= d then e := f"
+    result = parser(code)
+    assert result == ['j>, a, b, 5', 'j, -, -, 2', 'j<=, c, d, 4', 'j, -, -, 5', 'e := f']
+
+def test_bool_or(parser):
+    code = "if not a > b and c <= d or e <> f then g := h"
+    result = parser(code)
+    assert result == ['j>, a, b, 4', 'j, -, -, 2', 'j<=, c, d, 6', 'j, -, -, 4', 'j<>, e, f, 6', 'j, -, -, 7', 'g := h']
+
+def test_bool(parser):
+    code = "if not (a > b and c or d) or not e <> f and not g then h := i"
+    result = parser(code)
+    assert result == ['j>, a, b, 2', 'j, -, -, 4', 'jnz, c, -, 6', 'j, -, -, 4', 'jnz, d, -, 6', 'j, -, -, 10', 'j<>, e, f, 11', 'j, -, -, 8', 'jnz, g, -, 11', 'j, -, -, 10', 'h := i']
