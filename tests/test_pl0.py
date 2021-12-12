@@ -59,6 +59,17 @@ def test_expression1(parser):
     result = parser(code)
     assert result == ['temp0 := i + j', 'a := temp0']
 
+def test_bool_id(parser):
+    code = "if not a then c := d"
+    result = parser(code)
+    assert result == ['jnz, a, -, 3', 'j, -, -, 2', 'c := d']
+
+def test_bool_paren(parser):
+    # 括号总是加在expression上而不是bool_expression上
+    code = "if not ((a)) then c := d"
+    result = parser(code)
+    assert result == ['jnz, a, -, 3', 'j, -, -, 2', 'c := d']
+
 def test_bool_not(parser):
     code = "if not a > b then c := d"
     result = parser(code)
