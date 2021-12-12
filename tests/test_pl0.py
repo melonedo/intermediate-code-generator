@@ -62,4 +62,4 @@ def test_expression1(parser):
 def test_goto(parser):
     code = "goto l"
     result = parser(code)
-    assert result == ['jnz, -, -, l.addr']
+    assert result == ['l: a:=1','goto l;']
