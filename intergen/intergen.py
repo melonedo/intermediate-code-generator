@@ -111,7 +111,6 @@ class Pl0Tree(Transformer):
         return f"temp{self.symbol_counter}"
 
     def start(self, s):
-        # 由于某些代码还没有nextlist，先不启用
         self.backpatch(s.nextlist, self.next_quad)
         return self.codes
 

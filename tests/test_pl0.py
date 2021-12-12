@@ -48,6 +48,12 @@ def test_if_else(parser):
     result = parser(code)
     assert result == ['jnz, a, -, 2', 'j, -, -, 4', 'b := c', 'j, -, -, 5', 'b := d']
 
+def test_if_not_else(parser):
+    code = "if not a then b := c else b := d"
+    result = parser(code)
+    print(result)
+    assert result == ['jnz, a, -, 4', 'j, -, -, 2', 'b := c', 'j, -, -, 5', 'b := d']
+
 
 def test_nested_if(parser):
     code = "if a then if b then c := d"
@@ -138,6 +144,11 @@ def test_while2(parser):
            ":= - ( a + b ) * ( c + d ) + ( a + b + c ) "
     result = parser(code)
     assert result == ['temp0 := a + b', 'temp1 := c * d', 'j<, temp0, temp1, 4', 'j, -, -, 29', 'temp2 := uminus a', 'temp3 := temp2 + b', 'temp4 := temp3 * c', 'jnz, temp4, -, 0', 'j, -, -, 9', 'jnz, d, -, 15', 'j, -, -, 11', 'temp5 := a + b', 'temp6 := d + e', 'j>, temp5, temp6, 15', 'j, -, -, 0', 'jnz, a, -, 19', 'j, -, -, 17', 'b := c', 'j, -, -, 4', 'temp7 := a + b', 'temp8 := c + d', 'temp9 := temp7 * temp8', 'temp10 := uminus temp9', 'temp11 := a + b', 'temp12 := temp11 + c', 'temp13 := temp10 + temp12', 'a := temp13', 'j, -, -, 4', 'j, -, -, 0']
+
+def test_while3(parser):
+    code = "while a do while not b * c and (d or e) do if not ((a)) then b := c else a := f"
+    result = parser(code)
+    assert result == ['jnz, a, -, 2', 'j, -, -, 16', 'temp0 := b * c', 'jnz, temp0, -, 0', 'j, -, -, 5', 'jnz, d, -, 9', 'j, -, -, 7', 'jnz, e, -, 9', 'j, -, -, 0', 'jnz, a, -, 13', 'j, -, -, 11', 'b := c', 'j, -, -, 2', 'a := f', 'j, -, -, 2', 'j, -, -, 0']
 
 def test_call(parser):
     code = "call f(a,b)"
