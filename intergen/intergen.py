@@ -6,39 +6,53 @@ pl0_grammar3 = """
     start: stmt
     
     ?stmt: s | open_stmt
-    s:  "if"i b "then"i m s n "else"i m s   -> s_if_else
+
+    s:  "if"i b_expr "then"i m s n "else"i m s   -> s_if_else
         | a                                 -> s_a
         | "{" l "}"
-        |label s                            -> s_label_s              
-        |"goto"i id                         -> s_goto
 
-    open_stmt: "if"i b "then"i m stmt               -> s_if
-        | "if"i b "then"i m s n "else"i m open_stmt -> s_if_else_open
+    open_stmt: "if"i b_expr "then"i m stmt               -> s_if
+        | "if"i b_expr "then"i m s n "else"i m open_stmt -> s_if_else_open
+
     a:  id ":=" expression
     
+
     expression: negative                    -> expression_num
         | expression "+" term               -> expression_add
+
     negative: term                          -> expression_num 
         | "-" term                          -> expression_negative     
+
     term: factor                            -> expression_num
         | term "*" factor                   -> expression_mutiply
+
     factor: id                              -> expression_id
         | num                               -> expression_num
         | "(" expression ")"                -> expression_brackets
 
-    label: id ":"                           -> s_label
     m:
+
     n:
-    b:  b "and"i m b
-        | expression relop expression
-        | "(" b ")"
-        | expression            -> bool_expression
-    l:  l ";" m s               -> s_semicolon
-        | s                     -> s_semicolon_s
-        
+
+
+    b_expr: b_and ("or"i m b_and)*   -> bool_or
+
+    b_and: b_not ("and"i m b_not)*   -> bool_and
+
+    b_not: b_comparison              -> bool_trans
+        | "not"i b_comparison        -> bool_not
+
+    b_comparison: expression relop expression  -> bool_expression_relop_expression
+        | expression                           -> bool_expression
+        | "(" b_expr ")"                       -> bool_trans
+
+    l:  l ";" m s
+        | s
+
     id: CNAME
     num: INT
-    relop: "="|"#"|"<"|"<="|">"|">="
+    !relop: "="|"<>"|"<"|"<="|">"|">="
+
     %import common.CNAME
     %import common.INT
     %import common.WS
@@ -118,16 +132,53 @@ class Pl0Tree(Transformer):
             return e
         else:
             raise GrammarError()
+    
+    def relop(self, r):
+        e = struct()
+        e.op = r
+        return e
 
     @v_args(inline=False)
-    def term(self, factors):
-        "只处理了含有一个项的情况"
-        return factors[0]
-        
+    def bool_or(self, b_ands):
+        b1 = b_ands[0]
+        for m, b2 in [b_ands[i:i + 2] for i in range(1, len(b_ands), 2)]:
+            b = struct()
+            self.backpatch(b1.falselist, m.quad)
+            b.truelist = self.merge(b1.truelist, b2.truelist)
+            b.falselist = b2.falselist
+            b1 = b
+        return b1
+    
     @v_args(inline=False)
-    def expression(self, terms):
-        "只处理了含有一个项的情况"
-        return terms[0]
+    def bool_and(self, b_nots):
+        b1 = b_nots[0]
+        for m, b2 in [b_nots[i:i + 2] for i in range(1, len(b_nots), 2)]:
+            b = struct()
+            self.backpatch(b1.truelist, m.quad)
+            b.truelist = b2.truelist
+            b.falselist = self.merge(b1.falselist, b2.falselist)
+            b1 = b        
+        return b1
+    
+    def bool_not(self, b1):
+        b = struct()
+        b.truelist = b1.falselist
+        b.falselist = b1.truelist
+        return b
+    
+    def bool_trans(self, b1):
+        b = struct()
+        b.truelist = b1.truelist
+        b.falselist = b1.falselist
+        return b
+
+    def bool_expression_relop_expression(self, e1, r, e2):
+        b = struct()
+        b.truelist = self.makelist(self.next_quad)
+        b.falselist = self.makelist(self.next_quad + 1)
+        self.emit(f"j{r.op}, {e1.place}, {e2.place}, 0")
+        self.emit(f"j, -, -, 0")
+        return b
     
     def bool_expression(self, i):
         b = struct()
@@ -193,59 +244,6 @@ class Pl0Tree(Transformer):
         e.place = self.newtemp()
         self.emit(f"{e.place} := {e1.place} * {factor.place}")
         return e
-
-    def s_label_s(self,id,s):
-        return s
-
-    def s_semicolon(self,l,m,s):
-        self.backpatch(l.nextlist,m.quad)
-        l.nextlist = s.nextlist
-        return l
-    
-    def s_semicolon_s(self,s):
-        l = struct()
-        l.nextlist = s.nextlist
-        return l
-
-    def s_goto(self, id):
-        s = struct()
-        if id in self.symbol_table:
-            entry = self.symbol_table[id]
-            if entry.isdefined=="已定义":
-                self.emit(f"j, -, -, {entry.place}")
-            elif  entry.isdefined=="未定义":
-                e = struct()
-                e.place = entry.place
-                entry.place=self.next_quad
-                self.emit(f"j, -, -, e.place")
-        else:
-                self.symbol_table[id] = id
-                self.symbol_table[id].isdefined="未定义"
-                self.symbol_table[id].place = self.next_quad
-                self.emit(f"j, -, -, 0")
-        s.nextlist=[]
-        return s
-
-    def s_label(self, id):
-        label = struct()
-        if id not in self.symbol_table:
-            self.symbol_table[id] = id
-            self.symbol_table[id].type="标号"
-            self.symbol_table[id].isdefined="已定义"
-            self.symbol_table[id].place = self.next_quad
-        elif id in self.symbol_table:
-            entry = self.symbol_table[id]
-            if entry(id).type == '标号' and entry(id).define == '未定义':
-                q = entry(id).place
-                self.symbol_table[id] = id
-                self.symbol_table[id].type="标号"
-                self.symbol_table[id].isdefined="已定义"
-                self.symbol_table[id].place = self.next_quad
-                self.backpatch(q,self.next_quad)
-        else :
-            Error
-        return label
-
 
 def get_parser(transform=True):
     transformer = Pl0Tree() if transform else None
