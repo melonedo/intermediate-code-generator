@@ -22,7 +22,6 @@ pl0_grammar3 = """
     term: factor
 
     factor: id                  -> factor1
-        | num
         | "(" expression ")"
 
     m:
@@ -38,11 +37,9 @@ pl0_grammar3 = """
         | s
 
     id: CNAME
-    num: INT
     relop: "="|"<>"|"<"|"<="|">"|">="
 
     %import common.CNAME
-    %import common.INT
     %import common.WS
     %ignore WS
 """
