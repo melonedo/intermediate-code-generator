@@ -7,37 +7,53 @@ pl0_grammar3 = """
     
     ?stmt: s | open_stmt
 
-    s:  "if"i b "then"i m s n "else"i m s   -> s_if_else
-        | a                                 -> s_a
+    s:  "if"i b_expr "then"i m s n "else"i m s   -> s_if_else
+        | a                                      -> s_a
         | "{" l "}"
+        | "while"i m b_expr "do"i m s            -> s_while
+        | "call"i id "(" e_list ")"              -> s_call
 
-    open_stmt: "if"i b "then"i m stmt               -> s_if
-        | "if"i b "then"i m s n "else"i m open_stmt -> s_if_else_open
+    open_stmt: "if"i b_expr "then"i m stmt               -> s_if
+        | "if"i b_expr "then"i m s n "else"i m open_stmt -> s_if_else_open
 
     a:  id ":=" expression
+    
+    expression: negative                    -> expression_num
+        | expression "+" term               -> expression_add
 
+    negative: term                          -> expression_num 
+        | "-" term                          -> expression_negative     
 
-    expression: term 
+    term: factor                            -> expression_num
+        | term "*" factor                   -> expression_mutiply
 
-    term: factor
-
-    factor: id                  -> factor1
-        | "(" expression ")"
+    factor: id                              -> expression_id
+        | num                               -> expression_num
+        | "(" expression ")"                -> expression_brackets
 
     m:
 
     n:
 
-    b:  b "and"i m b
-        | expression relop expression
-        | "(" b ")"
-        | expression            -> bool_expression
+    b_expr: b_and ("or"i m b_and)*   -> bool_or
+
+    b_and: b_not ("and"i m b_not)*   -> bool_and
+
+    b_not: b_comparison              -> bool_trans
+        | "not"i b_comparison        -> bool_not
+
+    b_comparison: expression relop expression  -> bool_expression_relop_expression
+        | expression                           -> bool_expression
+        | "(" b_expr ")"                       -> bool_trans
 
     l:  l ";" m s
         | s
+        
+    e_list: expression                   -> call_init     
+        | e_list "," expression          -> call_add
 
     id: CNAME
-    relop: "="|"<>"|"<"|"<="|">"|">="
+    !relop: "="|"<>"|"<"|"<="|">"|">="
 
     %import common.CNAME
     %import common.WS
@@ -62,7 +78,7 @@ class Pl0Tree(Transformer):
 
     def __init__(self):
         self.symbol_table = {}
-        self.symbol_counter = 0
+        self.symbol_counter = -1
         self.next_quad = 0
         self.codes = []
 
@@ -89,10 +105,10 @@ class Pl0Tree(Transformer):
             self.codes[i] = new_code
     
     def newtemp(self):
+        self.symbol_counter += 1
         return f"temp{self.symbol_counter}"
 
     def start(self, s):
-        # 由于某些代码还没有nextlist，先不启用
         self.backpatch(s.nextlist, self.next_quad)
         return self.codes
 
@@ -109,7 +125,7 @@ class Pl0Tree(Transformer):
         else:
             raise GrammarError()
 
-    def factor1(self, id):
+    def expression_id(self, id):
         e = struct()
         p = self.lookup(id.name)
         if p is not None:
@@ -117,16 +133,53 @@ class Pl0Tree(Transformer):
             return e
         else:
             raise GrammarError()
+    
+    def relop(self, r):
+        e = struct()
+        e.op = r
+        return e
 
     @v_args(inline=False)
-    def term(self, factors):
-        "只处理了含有一个项的情况"
-        return factors[0]
-
+    def bool_or(self, b_ands):
+        b1 = b_ands[0]
+        for m, b2 in [b_ands[i:i + 2] for i in range(1, len(b_ands), 2)]:
+            b = struct()
+            self.backpatch(b1.falselist, m.quad)
+            b.truelist = self.merge(b1.truelist, b2.truelist)
+            b.falselist = b2.falselist
+            b1 = b
+        return b1
+    
     @v_args(inline=False)
-    def expression(self, terms):
-        "只处理了含有一个项的情况"
-        return terms[0]
+    def bool_and(self, b_nots):
+        b1 = b_nots[0]
+        for m, b2 in [b_nots[i:i + 2] for i in range(1, len(b_nots), 2)]:
+            b = struct()
+            self.backpatch(b1.truelist, m.quad)
+            b.truelist = b2.truelist
+            b.falselist = self.merge(b1.falselist, b2.falselist)
+            b1 = b        
+        return b1
+    
+    def bool_not(self, b1):
+        b = struct()
+        b.truelist = b1.falselist
+        b.falselist = b1.truelist
+        return b
+    
+    def bool_trans(self, b1):
+        b = struct()
+        b.truelist = b1.truelist
+        b.falselist = b1.falselist
+        return b
+
+    def bool_expression_relop_expression(self, e1, r, e2):
+        b = struct()
+        b.truelist = self.makelist(self.next_quad)
+        b.falselist = self.makelist(self.next_quad + 1)
+        self.emit(f"j{r.op}, {e1.place}, {e2.place}, 0")
+        self.emit(f"j, -, -, 0")
+        return b
     
     def bool_expression(self, i):
         b = struct()
@@ -164,12 +217,61 @@ class Pl0Tree(Transformer):
         n.nextlist = self.makelist(self.next_quad)
         self.emit(f"j, -, -, 0")
         return n
+    
+    def expression_add(self,e1,e2):
+        e = struct()
+        e.place = self.newtemp()
+        self.emit(f"{e.place} := {e1.place} + {e2.place}")
+        return e
+    
+    def expression_negative(self,e1):
+        e = struct()
+        e.place = self.newtemp()
+        self.emit(f"{e.place} := uminus {e1.place}")
+        return e
 
+    def expression_brackets(self,e1):
+        e = struct()
+        e.place = e1.place
+        return e
+
+    def expression_num(self,num):
+        e = struct()
+        e.place = num.place
+        return e
+
+    def expression_mutiply(self,e1,factor):
+        e = struct()
+        e.place = self.newtemp()
+        self.emit(f"{e.place} := {e1.place} * {factor.place}")
+        return e
+
+    def s_while(self, m1, b, m2, s1):
+        s = struct()
+        self.backpatch(s1.nextlist, m1.quad)
+        self.backpatch(b.truelist, m2.quad)
+        s.nextlist = b.falselist
+        self.emit(f"j, -, -, {m1.quad}")
+        return s
+
+    def s_call(self, id, e_list):
+        s = struct()
+        for p in e_list:
+            self.emit(f"param {p}")
+        self.emit(f"call {id.name}")
+        s.nextlist = []
+        return s
+
+    def call_add(self, e_list, e):
+        e_list.append(e.place)
+        return e_list
+
+    def call_init(self, e):
+        e_list = [e.place]
+        return e_list
 
 def get_parser(transform=True):
     transformer = Pl0Tree() if transform else None
     pl0_parser = Lark(pl0_grammar3, parser='lalr', transformer=transformer)
     parser = pl0_parser.parse
     return parser
-
-
