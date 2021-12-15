@@ -1,5 +1,9 @@
+from typing import ValuesView
 from lark import Lark, Transformer, v_args
+import csv
+import json
 
+from lark.load_grammar import Grammar
 
 "简化版，只包含生成代码的语法。非常不完全，自行添加需要的语法。"
 pl0_grammar3 = """
@@ -28,16 +32,15 @@ pl0_grammar3 = """
         | term "*" factor                   -> expression_mutiply
 
     factor: id                              -> expression_id
-        | num                               -> expression_num
         | "(" expression ")"                -> expression_brackets
 
     m:
 
     n:
 
-    b_expr: b_and ("or"i m b_and)*   -> bool_or
+    b_expr: b_and   -> bool_or
 
-    b_and: b_not ("and"i m b_not)*   -> bool_and
+    b_and: b_not   -> bool_and
 
     b_not: b_comparison              -> bool_trans
         | "not"i b_comparison        -> bool_not
@@ -120,8 +123,7 @@ class Pl0Tree(Transformer):
     def a(self, id, E):
         p = self.lookup(id.name)
         if p is not None:
-            # self.emit(f"{p} := {E.place}")
-            pass
+            self.emit(f"{p} := {E.place}")
         else:
             raise GrammarError()
 
@@ -272,6 +274,77 @@ class Pl0Tree(Transformer):
 
 def get_parser(transform=True):
     transformer = Pl0Tree() if transform else None
-    pl0_parser = Lark(pl0_grammar3, parser='lalr', transformer=transformer)
+    # pl0_parser = Lark(pl0_grammar3, parser='lalr', transformer=transformer)
+    pl0_parser = PL0Parser()
     parser = pl0_parser.parse
     return parser
+
+
+parsing_table = []
+with open('parsing-table.csv', newline='') as csvfile:
+    reader = csv.DictReader(csvfile)
+    for row in reader:
+        parsing_table.append(row)
+
+with open('productions.json') as f:
+    productions = json.load(f)
+
+terminals = frozenset(["'('", "')'", "'*'", "'+'", "','", "'-'", "':='", "';'", "'<'", "'<='", "'<>'", "'='", "'>'", "'>='", "'call'", "'do'", "'else'", "'if'", "'not'", "'then'", "'while'", "'{'", "'}'"])
+
+terminals_to_keep = frozenset(["'<'", "'<='", "'<>'", "'='", "'>'", "'>='"])
+
+terminals_to_drop = terminals - terminals_to_keep
+
+def keep_terminal(t):
+    return not (isinstance(t, str) and f"'{t}'" in terminals_to_drop)
+
+def classify(tok):
+    quoted = f"'{tok}'"
+    if quoted in terminals:
+        return quoted, tok
+    else:
+        return "CNAME", tok
+
+def lex(code):
+    lexemes = code.split()
+    tokens = list(map(classify, lexemes))
+    tokens.append(("$end", ""))
+    return tokens
+
+class PL0Parser(Pl0Tree):
+    def parse(self, code):
+        tokens = lex(code)
+        ind = 0
+        stack = [0]
+        value_stack = []
+        while True:
+            a = tokens[ind]
+            ttype, tvalue = a
+            s = stack[-1]
+            action = parsing_table[s].get(ttype, "")
+            if action.startswith('s'):
+                t = int(action[1:])
+                stack.append(t)
+                value_stack.append(tvalue)
+                ind += 1
+            elif action.startswith('r'):
+                i = int(action[1:])
+                rule_name, rule_len, action_name = productions[i]
+                del stack[-rule_len:]
+                t = stack[-1]
+                goto = int(parsing_table[t][rule_name])
+                stack.append(goto)
+                action = getattr(self, action_name, None)
+                if action is None:
+                    assert rule_len == 1
+                    svalue = value_stack[-1]
+                else:
+                    args = [v for v in value_stack[-rule_len:] if keep_terminal(v)]
+                    svalue = action(*args)
+                del value_stack[-rule_len:]
+                value_stack.append(svalue)
+            elif action == "a":
+                assert len(value_stack) == 1
+                return value_stack[0]
+            else:
+                raise GrammarError()

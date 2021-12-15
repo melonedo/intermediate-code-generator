@@ -17,20 +17,3 @@ def test_pl0():
     """
     parse = get_parser()
     parse(code)
-
-from intergen.intergen import Pl0Tree, Lark, pl0_grammar3
-transformer = Pl0Tree()
-pl0_parser = Lark(pl0_grammar3, parser='lalr', transformer=transformer)
-def get_name(c):
-    try:
-        if hasattr(c, '__name__'):
-            return c.__name__
-        else:
-            return c.node_builder.__name__
-    except Exception:
-        # return str(c)
-        return None
-cs = [get_name(c) for c in pl0_parser._callbacks.values()]
-c = cs[0]
-print(cs)
-test_pl0()
