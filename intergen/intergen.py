@@ -217,7 +217,7 @@ class Pl0Tree(Transformer):
                 e = struct()
                 e.place = entry.place
                 entry.place=self.next_quad
-                self.emit(f"j, -, -, e.place")
+                self.emit(f"j, -, -, {e.place}")
         else:
                 self.symbol_table[id] = id
                 self.symbol_table[id].isdefined="未定义"
@@ -242,7 +242,7 @@ class Pl0Tree(Transformer):
                 self.symbol_table[id].isdefined="已定义"
                 self.symbol_table[id].place = self.next_quad
                 self.backpatch(q,self.next_quad)
-        else :
+        else:
             Error
         return label
 

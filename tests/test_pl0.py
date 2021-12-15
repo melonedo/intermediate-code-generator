@@ -71,10 +71,12 @@ def test_goto(parser):
     code = "goto l"
     result = parser(code)
 
-# def test_goto(parser):
-#     code = "{l: a:=b; goto l;}"
-#     result = parser(code)
+def test_goto(parser):
+    code = "{d:=c; l: a:=b; goto l}"
+    result = parser(code)
+    assert result == ['d := c', 'a := b', 'j, -, -, 1']
 
-# def test_goto1(parser):
-#     code = "{goto l; l: a:=b;}"
-#     result = parser(code)
+def test_goto1(parser):
+    code = "{goto l; l: a:=b}"
+    result = parser(code)
+    assert result == ['j, -, -, 1', "a := b"]
