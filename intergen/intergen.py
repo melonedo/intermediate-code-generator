@@ -1,4 +1,5 @@
 from lark import Lark, Transformer, v_args
+from lark.load_grammar import Grammar
 
 
 "简化版，只包含生成代码的语法。非常不完全，自行添加需要的语法。"
@@ -8,7 +9,7 @@ pl0_grammar3 = """
     ?stmt: s | open_stmt
     s:  "if"i b "then"i m s n "else"i m s   -> s_if_else
         | a                                 -> s_a
-        | "{" l "}"
+        | "{" l "}"                         -> s_brackets
         |label s                            -> s_label_s              
         |"goto"i id                         -> s_goto
 
@@ -67,9 +68,10 @@ class Pl0Tree(Transformer):
         self.next_quad = 0
         self.codes = []
 
-    def lookup(self, id):
+    def lookup(self, id, **kwargs):
         if id not in self.symbol_table:
-            self.symbol_table[id] = id
+            s = struct(**kwargs)
+            self.symbol_table[id] = s
             # self.symbol_counter += 1
         return self.symbol_table[id]
 
@@ -104,17 +106,17 @@ class Pl0Tree(Transformer):
         return i
 
     def a(self, id, E):
-        p = self.lookup(id.name)
+        p = self.lookup(id.name, type="variable", place=id.name)
         if p is not None:
-            self.emit(f"{p} := {E.place}")
+            self.emit(f"{p.place} := {E.place}")
         else:
             raise GrammarError()
 
     def expression_id(self, id):
         e = struct()
-        p = self.lookup(id.name)
+        p = self.lookup(id.name, type="variable", place=id.name)
         if p is not None:
-            e.place = p
+            e.place = p.place
             return e
         else:
             raise GrammarError()
@@ -197,6 +199,9 @@ class Pl0Tree(Transformer):
     def s_label_s(self,id,s):
         return s
 
+    def s_brackets(self, s):
+        return s
+
     def s_semicolon(self,l,m,s):
         self.backpatch(l.nextlist,m.quad)
         l.nextlist = s.nextlist
@@ -208,47 +213,35 @@ class Pl0Tree(Transformer):
         return l
 
     def s_goto(self, id):
-        s = struct()
-        if id in self.symbol_table:
-            entry = self.symbol_table[id]
-            if entry.isdefined=="已定义":
-                self.emit(f"j, -, -, {entry.place}")
-            elif  entry.isdefined=="未定义":
-                e = struct()
-                e.place = entry.place
-                entry.place=self.next_quad
-                self.emit(f"j, -, -, {e.place}")
+        if id.name in self.symbol_table:
+            entry = self.symbol_table[id.name]
+            if entry.type == "label":
+                if entry.defined:
+                    self.emit(f"j, -, -, {entry.place}")
+                else:
+                    entry.quad_list.append(self.next_quad)
+                    self.emit("j, -, -, 0")
+            else:
+                raise GrammarError()
         else:
-                self.symbol_table[id] = id
-                self.symbol_table[id].isdefined="未定义"
-                self.symbol_table[id].place = self.next_quad
-                self.emit(f"j, -, -, 0")
-        s.nextlist=[]
+            quad_list = self.makelist(self.next_quad)
+            entry = struct(type="label", defined=False, quad_list=quad_list)
+            self.symbol_table[id.name] = entry
+            self.emit("j, -, -, 0")
+
+        s = struct()
+        s.nextlist = self.makelist()
         return s
 
     def s_label(self, id):
-        label = struct()
-        if id not in self.symbol_table:
-            self.symbol_table[id] = id
-            self.symbol_table[id].type="标号"
-            self.symbol_table[id].isdefined="已定义"
-            self.symbol_table[id].place = self.next_quad
-        elif id in self.symbol_table:
-            entry = self.symbol_table[id]
-            if entry(id).type == '标号' and entry(id).define == '未定义':
-                q = entry(id).place
-                self.symbol_table[id] = id
-                self.symbol_table[id].type="标号"
-                self.symbol_table[id].isdefined="已定义"
-                self.symbol_table[id].place = self.next_quad
-                self.backpatch(q,self.next_quad)
+        if id.name in self.symbol_table:
+            entry = self.symbol_table[id.name]
+            if entry.type != "label" or entry.defined:
+                raise GrammarError()
+            else:
+                entry.defined = True
+                self.backpatch(entry.quad_list, self.next_quad)
         else:
-            Error
-        return label
-
-
-def get_parser(transform=True):
-    transformer = Pl0Tree() if transform else None
-    pl0_parser = Lark(pl0_grammar3, parser='lalr', transformer=transformer)
-    parser = pl0_parser.parse
-    return parser
+            entry = struct(type="label", defined=True, place=self.next_quad)
+            self.symbol_table[id.name] = entry
+            
