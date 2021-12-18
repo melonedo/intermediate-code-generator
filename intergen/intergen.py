@@ -193,9 +193,9 @@ class Pl0Tree(Transformer):
     
     def s_if_else(self, b, m1, s1, n, m2, s2):
         s = struct()
-        # self.backpatch(b.truelist, m1.quad)
-        # self.backpatch(b.falselist, m2.quad)
-        # s.nextlist = self.merge(s1.nextlist, self.merge(s2.nextlist, n.nextlist))
+        self.backpatch(b.truelist, m1.quad)
+        self.backpatch(b.falselist, m2.quad)
+        s.nextlist = self.merge(s1.nextlist, self.merge(s2.nextlist, n.nextlist))
         return s
 
     def s_a(self, a):
@@ -324,7 +324,7 @@ class PL0Parser(Pl0Tree):
             elif action.startswith('r'):
                 i = int(action[1:])
                 rule_name, rule_len, action_name = productions[i]
-                del stack[-rule_len:]
+                del stack[len(stack)-rule_len:]
                 t = stack[-1]
                 goto = int(parsing_table[t][rule_name])
                 stack.append(goto)
@@ -333,9 +333,9 @@ class PL0Parser(Pl0Tree):
                     assert rule_len == 1
                     svalue = value_stack[-1]
                 else:
-                    args = [v for v in value_stack[-rule_len:] if keep_terminal(v)]
+                    args = [v for v in value_stack[len(value_stack)-rule_len:] if keep_terminal(v)]
                     svalue = action(*args)
-                del value_stack[-rule_len:]
+                del value_stack[len(value_stack)-rule_len:]
                 value_stack.append(svalue)
             elif action == "a":
                 assert len(value_stack) == 1
