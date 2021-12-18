@@ -16,3 +16,11 @@ pipenv --rm
 ```
 
 另外也提供requirements.txt。
+
+## LR分析表生成器
+由于语法有歧义，生成器生成的语法需要手动编辑消除歧义。
+```shell
+git submodule update
+pipenv shell
+py intergen/tablegen.py
+```
