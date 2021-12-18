@@ -38,12 +38,14 @@ pl0_grammar3 = """
 
     n:
 
-    b_expr: b_and   -> bool_or
+    b_expr: b_and                    -> bool_trans
+        | b_expr "or"i m b_and       -> bool_or
 
-    b_and: b_not   -> bool_and
+    b_and: b_not                     -> bool_trans
+        | b_and "and"i m b_not       -> bool_and
 
     b_not: b_comparison              -> bool_trans
-        | "not"i b_comparison        -> bool_not
+        | "not"i b_not               -> bool_not
 
     b_comparison: expression relop expression  -> bool_expression_relop_expression
         | expression                           -> bool_expression
@@ -141,27 +143,19 @@ class Pl0Tree(Transformer):
         e.op = r
         return e
 
-    @v_args(inline=False)
-    def bool_or(self, b_ands):
-        b1 = b_ands[0]
-        for m, b2 in [b_ands[i:i + 2] for i in range(1, len(b_ands), 2)]:
-            b = struct()
-            self.backpatch(b1.falselist, m.quad)
-            b.truelist = self.merge(b1.truelist, b2.truelist)
-            b.falselist = b2.falselist
-            b1 = b
-        return b1
+    def bool_or(self, b1, m, b2):
+        b = struct()
+        self.backpatch(b1.falselist, m.quad)
+        b.truelist = self.merge(b1.truelist, b2.truelist)
+        b.falselist = b2.falselist
+        return b
     
-    @v_args(inline=False)
-    def bool_and(self, b_nots):
-        b1 = b_nots[0]
-        for m, b2 in [b_nots[i:i + 2] for i in range(1, len(b_nots), 2)]:
-            b = struct()
-            self.backpatch(b1.truelist, m.quad)
-            b.truelist = b2.truelist
-            b.falselist = self.merge(b1.falselist, b2.falselist)
-            b1 = b        
-        return b1
+    def bool_and(self, b1, m, b2):
+        b = struct()
+        self.backpatch(b1.truelist, m.quad)
+        b.truelist = b2.truelist
+        b.falselist = self.merge(b1.falselist, b2.falselist)    
+        return b
     
     def bool_not(self, b1):
         b = struct()
@@ -289,7 +283,7 @@ with open('parsing-table.csv', newline='') as csvfile:
 with open('productions.json') as f:
     productions = json.load(f)
 
-terminals = frozenset(["'('", "')'", "'*'", "'+'", "','", "'-'", "':='", "';'", "'<'", "'<='", "'<>'", "'='", "'>'", "'>='", "'call'", "'do'", "'else'", "'if'", "'not'", "'then'", "'while'", "'{'", "'}'"])
+terminals = frozenset(["'('", "')'", "'*'", "'+'", "','", "'-'", "':='", "';'", "'<'", "'<='", "'<>'", "'='", "'>'", "'>='", "'and'", "'call'", "'do'", "'else'", "'if'", "'not'", "'or'", "'then'", "'while'", "'{'", "'}'"])
 
 terminals_to_keep = frozenset(["'<'", "'<='", "'<>'", "'='", "'>'", "'>='"])
 

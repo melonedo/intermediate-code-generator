@@ -1,44 +1,46 @@
-Indexed grammar rules (40 in total):
+Indexed grammar rules (42 in total):
 0    $accept: start
 1    a: id ':=' expression
 2    b_and: b_not
-3    b_comparison: expression relop expression
-4                | expression
-5                | '(' b_expr ')'
-6    b_expr: b_and
-7    b_not: b_comparison
-8         | 'not' b_comparison
-9    e_list: expression
-10         | e_list ',' expression
-11   expression: negative
-12             | expression '+' term
-13   factor: id
-14         | '(' expression ')'
-15   id: CNAME
-16   l: l ';' m s
-17    | s
-18   m: 
-19   n: 
-20   negative: term
-21           | '-' term
-22   open_stmt: 'if' b_expr 'then' m stmt
-23            | 'if' b_expr 'then' m s n 'else' m open_stmt
-24   relop: '='
-25        | '<>'
-26        | '<'
-27        | '<='
-28        | '>'
-29        | '>='
-30   s: 'if' b_expr 'then' m s n 'else' m s
-31    | a
-32    | '{' l '}'
-33    | 'while' m b_expr 'do' m s
-34    | 'call' id '(' e_list ')'
-35   start: stmt
-36   stmt: s
-37       | open_stmt
-38   term: factor
-39       | term '*' factor
+3         | b_and 'and' m b_not
+4    b_comparison: expression relop expression
+5                | expression
+6                | '(' b_expr ')'
+7    b_expr: b_and
+8          | b_expr 'or' m b_and
+9    b_not: b_comparison
+10        | 'not' b_not
+11   e_list: expression
+12         | e_list ',' expression
+13   expression: negative
+14             | expression '+' term
+15   factor: id
+16         | '(' expression ')'
+17   id: CNAME
+18   l: l ';' m s
+19    | s
+20   m: 
+21   n: 
+22   negative: term
+23           | '-' term
+24   open_stmt: 'if' b_expr 'then' m stmt
+25            | 'if' b_expr 'then' m s n 'else' m open_stmt
+26   relop: '='
+27        | '<>'
+28        | '<'
+29        | '<='
+30        | '>'
+31        | '>='
+32   s: 'if' b_expr 'then' m s n 'else' m s
+33    | a
+34    | '{' l '}'
+35    | 'while' m b_expr 'do' m s
+36    | 'call' id '(' e_list ')'
+37   start: stmt
+38   stmt: s
+39       | open_stmt
+40   term: factor
+41       | term '*' factor
 
 Grammar non-terminals (20 in total):
 	$accept
@@ -62,7 +64,7 @@ Grammar non-terminals (20 in total):
 	stmt
 	term
 
-Grammar terminals (24 in total):
+Grammar terminals (26 in total):
 	'('
 	')'
 	'*'
@@ -77,11 +79,13 @@ Grammar terminals (24 in total):
 	'='
 	'>'
 	'>='
+	'and'
 	'call'
 	'do'
 	'else'
 	'if'
 	'not'
+	'or'
 	'then'
 	'while'
 	'{'
@@ -90,7 +94,7 @@ Grammar terminals (24 in total):
 
 PARSING TABLE SUMMARY
 Is the given grammar LALR(1)? No
-State 44 has a shift-reduce conflict
+State 46 has a shift-reduce conflict
 
 State 0
 	0    $accept: . start
@@ -109,12 +113,12 @@ State 0
 	for non-terminal stmt: go to state 6
 
 State 1
-	31   s: a .
+	33   s: a .
 
-	for terminal $end: reduce using rule 31
-	for terminal ';': reduce using rule 31
-	for terminal 'else': reduce using rule 31
-	for terminal '}': reduce using rule 31
+	for terminal $end: reduce using rule 33
+	for terminal ';': reduce using rule 33
+	for terminal 'else': reduce using rule 33
+	for terminal '}': reduce using rule 33
 
 State 2
 	1    a: id . ':=' expression
@@ -122,14 +126,14 @@ State 2
 	for terminal ':=': shift and go to state 12
 
 State 3
-	37   stmt: open_stmt .
+	39   stmt: open_stmt .
 
-	for terminal $end: reduce using rule 37
+	for terminal $end: reduce using rule 39
 
 State 4
-	36   stmt: s .
+	38   stmt: s .
 
-	for terminal $end: reduce using rule 36
+	for terminal $end: reduce using rule 38
 
 State 5
 	0    $accept: start .
@@ -137,21 +141,21 @@ State 5
 	for terminal $end: accept 
 
 State 6
-	35   start: stmt .
+	37   start: stmt .
 
-	for terminal $end: reduce using rule 35
+	for terminal $end: reduce using rule 37
 
 State 7
-	34   s: 'call' . id '(' e_list ')'
+	36   s: 'call' . id '(' e_list ')'
 
 	for terminal CNAME: shift and go to state 11
 
 	for non-terminal id: go to state 13
 
 State 8
-	22   open_stmt: 'if' . b_expr 'then' m stmt
-	23   open_stmt: 'if' . b_expr 'then' m s n 'else' m open_stmt
-	30   s: 'if' . b_expr 'then' m s n 'else' m s
+	24   open_stmt: 'if' . b_expr 'then' m stmt
+	25   open_stmt: 'if' . b_expr 'then' m s n 'else' m open_stmt
+	32   s: 'if' . b_expr 'then' m s n 'else' m s
 
 	for terminal '(': shift and go to state 23
 	for terminal '-': shift and go to state 24
@@ -169,17 +173,17 @@ State 8
 	for non-terminal term: go to state 22
 
 State 9
-	33   s: 'while' . m b_expr 'do' m s
+	35   s: 'while' . m b_expr 'do' m s
 
-	for terminal '(': reduce using rule 18
-	for terminal '-': reduce using rule 18
-	for terminal 'not': reduce using rule 18
-	for terminal CNAME: reduce using rule 18
+	for terminal '(': reduce using rule 20
+	for terminal '-': reduce using rule 20
+	for terminal 'not': reduce using rule 20
+	for terminal CNAME: reduce using rule 20
 
 	for non-terminal m: go to state 26
 
 State 10
-	32   s: '{' . l '}'
+	34   s: '{' . l '}'
 
 	for terminal 'call': shift and go to state 7
 	for terminal 'if': shift and go to state 29
@@ -193,26 +197,28 @@ State 10
 	for non-terminal s: go to state 28
 
 State 11
-	15   id: CNAME .
+	17   id: CNAME .
 
-	for terminal $end: reduce using rule 15
-	for terminal '(': reduce using rule 15
-	for terminal ')': reduce using rule 15
-	for terminal '*': reduce using rule 15
-	for terminal '+': reduce using rule 15
-	for terminal ',': reduce using rule 15
-	for terminal ':=': reduce using rule 15
-	for terminal ';': reduce using rule 15
-	for terminal '<': reduce using rule 15
-	for terminal '<=': reduce using rule 15
-	for terminal '<>': reduce using rule 15
-	for terminal '=': reduce using rule 15
-	for terminal '>': reduce using rule 15
-	for terminal '>=': reduce using rule 15
-	for terminal 'do': reduce using rule 15
-	for terminal 'else': reduce using rule 15
-	for terminal 'then': reduce using rule 15
-	for terminal '}': reduce using rule 15
+	for terminal $end: reduce using rule 17
+	for terminal '(': reduce using rule 17
+	for terminal ')': reduce using rule 17
+	for terminal '*': reduce using rule 17
+	for terminal '+': reduce using rule 17
+	for terminal ',': reduce using rule 17
+	for terminal ':=': reduce using rule 17
+	for terminal ';': reduce using rule 17
+	for terminal '<': reduce using rule 17
+	for terminal '<=': reduce using rule 17
+	for terminal '<>': reduce using rule 17
+	for terminal '=': reduce using rule 17
+	for terminal '>': reduce using rule 17
+	for terminal '>=': reduce using rule 17
+	for terminal 'and': reduce using rule 17
+	for terminal 'do': reduce using rule 17
+	for terminal 'else': reduce using rule 17
+	for terminal 'or': reduce using rule 17
+	for terminal 'then': reduce using rule 17
+	for terminal '}': reduce using rule 17
 
 State 12
 	1    a: id ':=' . expression
@@ -228,82 +234,116 @@ State 12
 	for non-terminal term: go to state 22
 
 State 13
-	34   s: 'call' id . '(' e_list ')'
+	36   s: 'call' id . '(' e_list ')'
 
 	for terminal '(': shift and go to state 32
 
 State 14
-	6    b_expr: b_and .
-
-	for terminal ')': reduce using rule 6
-	for terminal 'do': reduce using rule 6
-	for terminal 'then': reduce using rule 6
-
-State 15
-	7    b_not: b_comparison .
+	3    b_and: b_and . 'and' m b_not
+	7    b_expr: b_and .
 
 	for terminal ')': reduce using rule 7
+	for terminal 'and': shift and go to state 33
 	for terminal 'do': reduce using rule 7
+	for terminal 'or': reduce using rule 7
 	for terminal 'then': reduce using rule 7
 
-State 16
-	22   open_stmt: 'if' b_expr . 'then' m stmt
-	23   open_stmt: 'if' b_expr . 'then' m s n 'else' m open_stmt
-	30   s: 'if' b_expr . 'then' m s n 'else' m s
+State 15
+	9    b_not: b_comparison .
 
-	for terminal 'then': shift and go to state 33
+	for terminal ')': reduce using rule 9
+	for terminal 'and': reduce using rule 9
+	for terminal 'do': reduce using rule 9
+	for terminal 'or': reduce using rule 9
+	for terminal 'then': reduce using rule 9
+
+State 16
+	8    b_expr: b_expr . 'or' m b_and
+	24   open_stmt: 'if' b_expr . 'then' m stmt
+	25   open_stmt: 'if' b_expr . 'then' m s n 'else' m open_stmt
+	32   s: 'if' b_expr . 'then' m s n 'else' m s
+
+	for terminal 'or': shift and go to state 34
+	for terminal 'then': shift and go to state 35
 
 State 17
 	2    b_and: b_not .
 
 	for terminal ')': reduce using rule 2
+	for terminal 'and': reduce using rule 2
 	for terminal 'do': reduce using rule 2
+	for terminal 'or': reduce using rule 2
 	for terminal 'then': reduce using rule 2
 
 State 18
-	3    b_comparison: expression . relop expression
-	4    b_comparison: expression .
-	12   expression: expression . '+' term
+	4    b_comparison: expression . relop expression
+	5    b_comparison: expression .
+	14   expression: expression . '+' term
 
-	for terminal ')': reduce using rule 4
-	for terminal '+': shift and go to state 35
-	for terminal '<': shift and go to state 36
-	for terminal '<=': shift and go to state 37
-	for terminal '<>': shift and go to state 38
-	for terminal '=': shift and go to state 39
-	for terminal '>': shift and go to state 40
-	for terminal '>=': shift and go to state 41
-	for terminal 'do': reduce using rule 4
-	for terminal 'then': reduce using rule 4
+	for terminal ')': reduce using rule 5
+	for terminal '+': shift and go to state 37
+	for terminal '<': shift and go to state 38
+	for terminal '<=': shift and go to state 39
+	for terminal '<>': shift and go to state 40
+	for terminal '=': shift and go to state 41
+	for terminal '>': shift and go to state 42
+	for terminal '>=': shift and go to state 43
+	for terminal 'and': reduce using rule 5
+	for terminal 'do': reduce using rule 5
+	for terminal 'or': reduce using rule 5
+	for terminal 'then': reduce using rule 5
 
-	for non-terminal relop: go to state 34
+	for non-terminal relop: go to state 36
 
 State 19
-	38   term: factor .
+	40   term: factor .
 
-	for terminal $end: reduce using rule 38
-	for terminal ')': reduce using rule 38
-	for terminal '*': reduce using rule 38
-	for terminal '+': reduce using rule 38
-	for terminal ',': reduce using rule 38
-	for terminal ';': reduce using rule 38
-	for terminal '<': reduce using rule 38
-	for terminal '<=': reduce using rule 38
-	for terminal '<>': reduce using rule 38
-	for terminal '=': reduce using rule 38
-	for terminal '>': reduce using rule 38
-	for terminal '>=': reduce using rule 38
-	for terminal 'do': reduce using rule 38
-	for terminal 'else': reduce using rule 38
-	for terminal 'then': reduce using rule 38
-	for terminal '}': reduce using rule 38
+	for terminal $end: reduce using rule 40
+	for terminal ')': reduce using rule 40
+	for terminal '*': reduce using rule 40
+	for terminal '+': reduce using rule 40
+	for terminal ',': reduce using rule 40
+	for terminal ';': reduce using rule 40
+	for terminal '<': reduce using rule 40
+	for terminal '<=': reduce using rule 40
+	for terminal '<>': reduce using rule 40
+	for terminal '=': reduce using rule 40
+	for terminal '>': reduce using rule 40
+	for terminal '>=': reduce using rule 40
+	for terminal 'and': reduce using rule 40
+	for terminal 'do': reduce using rule 40
+	for terminal 'else': reduce using rule 40
+	for terminal 'or': reduce using rule 40
+	for terminal 'then': reduce using rule 40
+	for terminal '}': reduce using rule 40
 
 State 20
-	13   factor: id .
+	15   factor: id .
+
+	for terminal $end: reduce using rule 15
+	for terminal ')': reduce using rule 15
+	for terminal '*': reduce using rule 15
+	for terminal '+': reduce using rule 15
+	for terminal ',': reduce using rule 15
+	for terminal ';': reduce using rule 15
+	for terminal '<': reduce using rule 15
+	for terminal '<=': reduce using rule 15
+	for terminal '<>': reduce using rule 15
+	for terminal '=': reduce using rule 15
+	for terminal '>': reduce using rule 15
+	for terminal '>=': reduce using rule 15
+	for terminal 'and': reduce using rule 15
+	for terminal 'do': reduce using rule 15
+	for terminal 'else': reduce using rule 15
+	for terminal 'or': reduce using rule 15
+	for terminal 'then': reduce using rule 15
+	for terminal '}': reduce using rule 15
+
+State 21
+	13   expression: negative .
 
 	for terminal $end: reduce using rule 13
 	for terminal ')': reduce using rule 13
-	for terminal '*': reduce using rule 13
 	for terminal '+': reduce using rule 13
 	for terminal ',': reduce using rule 13
 	for terminal ';': reduce using rule 13
@@ -313,54 +353,39 @@ State 20
 	for terminal '=': reduce using rule 13
 	for terminal '>': reduce using rule 13
 	for terminal '>=': reduce using rule 13
+	for terminal 'and': reduce using rule 13
 	for terminal 'do': reduce using rule 13
 	for terminal 'else': reduce using rule 13
+	for terminal 'or': reduce using rule 13
 	for terminal 'then': reduce using rule 13
 	for terminal '}': reduce using rule 13
 
-State 21
-	11   expression: negative .
-
-	for terminal $end: reduce using rule 11
-	for terminal ')': reduce using rule 11
-	for terminal '+': reduce using rule 11
-	for terminal ',': reduce using rule 11
-	for terminal ';': reduce using rule 11
-	for terminal '<': reduce using rule 11
-	for terminal '<=': reduce using rule 11
-	for terminal '<>': reduce using rule 11
-	for terminal '=': reduce using rule 11
-	for terminal '>': reduce using rule 11
-	for terminal '>=': reduce using rule 11
-	for terminal 'do': reduce using rule 11
-	for terminal 'else': reduce using rule 11
-	for terminal 'then': reduce using rule 11
-	for terminal '}': reduce using rule 11
-
 State 22
-	20   negative: term .
-	39   term: term . '*' factor
+	22   negative: term .
+	41   term: term . '*' factor
 
-	for terminal $end: reduce using rule 20
-	for terminal ')': reduce using rule 20
-	for terminal '*': shift and go to state 42
-	for terminal '+': reduce using rule 20
-	for terminal ',': reduce using rule 20
-	for terminal ';': reduce using rule 20
-	for terminal '<': reduce using rule 20
-	for terminal '<=': reduce using rule 20
-	for terminal '<>': reduce using rule 20
-	for terminal '=': reduce using rule 20
-	for terminal '>': reduce using rule 20
-	for terminal '>=': reduce using rule 20
-	for terminal 'do': reduce using rule 20
-	for terminal 'else': reduce using rule 20
-	for terminal 'then': reduce using rule 20
-	for terminal '}': reduce using rule 20
+	for terminal $end: reduce using rule 22
+	for terminal ')': reduce using rule 22
+	for terminal '*': shift and go to state 44
+	for terminal '+': reduce using rule 22
+	for terminal ',': reduce using rule 22
+	for terminal ';': reduce using rule 22
+	for terminal '<': reduce using rule 22
+	for terminal '<=': reduce using rule 22
+	for terminal '<>': reduce using rule 22
+	for terminal '=': reduce using rule 22
+	for terminal '>': reduce using rule 22
+	for terminal '>=': reduce using rule 22
+	for terminal 'and': reduce using rule 22
+	for terminal 'do': reduce using rule 22
+	for terminal 'else': reduce using rule 22
+	for terminal 'or': reduce using rule 22
+	for terminal 'then': reduce using rule 22
+	for terminal '}': reduce using rule 22
 
 State 23
-	5    b_comparison: '(' . b_expr ')'
-	14   factor: '(' . expression ')'
+	6    b_comparison: '(' . b_expr ')'
+	16   factor: '(' . expression ')'
 
 	for terminal '(': shift and go to state 23
 	for terminal '-': shift and go to state 24
@@ -369,32 +394,34 @@ State 23
 
 	for non-terminal b_and: go to state 14
 	for non-terminal b_comparison: go to state 15
-	for non-terminal b_expr: go to state 43
+	for non-terminal b_expr: go to state 45
 	for non-terminal b_not: go to state 17
-	for non-terminal expression: go to state 44
+	for non-terminal expression: go to state 46
 	for non-terminal factor: go to state 19
 	for non-terminal id: go to state 20
 	for non-terminal negative: go to state 21
 	for non-terminal term: go to state 22
 
 State 24
-	21   negative: '-' . term
+	23   negative: '-' . term
 
 	for terminal '(': shift and go to state 31
 	for terminal CNAME: shift and go to state 11
 
 	for non-terminal factor: go to state 19
 	for non-terminal id: go to state 20
-	for non-terminal term: go to state 45
+	for non-terminal term: go to state 47
 
 State 25
-	8    b_not: 'not' . b_comparison
+	10   b_not: 'not' . b_not
 
 	for terminal '(': shift and go to state 23
 	for terminal '-': shift and go to state 24
+	for terminal 'not': shift and go to state 25
 	for terminal CNAME: shift and go to state 11
 
-	for non-terminal b_comparison: go to state 46
+	for non-terminal b_comparison: go to state 15
+	for non-terminal b_not: go to state 48
 	for non-terminal expression: go to state 18
 	for non-terminal factor: go to state 19
 	for non-terminal id: go to state 20
@@ -402,7 +429,7 @@ State 25
 	for non-terminal term: go to state 22
 
 State 26
-	33   s: 'while' m . b_expr 'do' m s
+	35   s: 'while' m . b_expr 'do' m s
 
 	for terminal '(': shift and go to state 23
 	for terminal '-': shift and go to state 24
@@ -411,7 +438,7 @@ State 26
 
 	for non-terminal b_and: go to state 14
 	for non-terminal b_comparison: go to state 15
-	for non-terminal b_expr: go to state 47
+	for non-terminal b_expr: go to state 49
 	for non-terminal b_not: go to state 17
 	for non-terminal expression: go to state 18
 	for non-terminal factor: go to state 19
@@ -420,20 +447,20 @@ State 26
 	for non-terminal term: go to state 22
 
 State 27
-	16   l: l . ';' m s
-	32   s: '{' l . '}'
+	18   l: l . ';' m s
+	34   s: '{' l . '}'
 
-	for terminal ';': shift and go to state 48
-	for terminal '}': shift and go to state 49
+	for terminal ';': shift and go to state 50
+	for terminal '}': shift and go to state 51
 
 State 28
-	17   l: s .
+	19   l: s .
 
-	for terminal ';': reduce using rule 17
-	for terminal '}': reduce using rule 17
+	for terminal ';': reduce using rule 19
+	for terminal '}': reduce using rule 19
 
 State 29
-	30   s: 'if' . b_expr 'then' m s n 'else' m s
+	32   s: 'if' . b_expr 'then' m s n 'else' m s
 
 	for terminal '(': shift and go to state 23
 	for terminal '-': shift and go to state 24
@@ -442,7 +469,7 @@ State 29
 
 	for non-terminal b_and: go to state 14
 	for non-terminal b_comparison: go to state 15
-	for non-terminal b_expr: go to state 50
+	for non-terminal b_expr: go to state 52
 	for non-terminal b_not: go to state 17
 	for non-terminal expression: go to state 18
 	for non-terminal factor: go to state 19
@@ -452,233 +479,298 @@ State 29
 
 State 30
 	1    a: id ':=' expression .
-	12   expression: expression . '+' term
+	14   expression: expression . '+' term
 
 	for terminal $end: reduce using rule 1
-	for terminal '+': shift and go to state 35
+	for terminal '+': shift and go to state 37
 	for terminal ';': reduce using rule 1
 	for terminal 'else': reduce using rule 1
 	for terminal '}': reduce using rule 1
 
 State 31
-	14   factor: '(' . expression ')'
+	16   factor: '(' . expression ')'
 
 	for terminal '(': shift and go to state 31
 	for terminal '-': shift and go to state 24
 	for terminal CNAME: shift and go to state 11
 
-	for non-terminal expression: go to state 51
-	for non-terminal factor: go to state 19
-	for non-terminal id: go to state 20
-	for non-terminal negative: go to state 21
-	for non-terminal term: go to state 22
-
-State 32
-	34   s: 'call' id '(' . e_list ')'
-
-	for terminal '(': shift and go to state 31
-	for terminal '-': shift and go to state 24
-	for terminal CNAME: shift and go to state 11
-
-	for non-terminal e_list: go to state 52
 	for non-terminal expression: go to state 53
 	for non-terminal factor: go to state 19
 	for non-terminal id: go to state 20
 	for non-terminal negative: go to state 21
 	for non-terminal term: go to state 22
 
-State 33
-	22   open_stmt: 'if' b_expr 'then' . m stmt
-	23   open_stmt: 'if' b_expr 'then' . m s n 'else' m open_stmt
-	30   s: 'if' b_expr 'then' . m s n 'else' m s
-
-	for terminal 'call': reduce using rule 18
-	for terminal 'if': reduce using rule 18
-	for terminal 'while': reduce using rule 18
-	for terminal '{': reduce using rule 18
-	for terminal CNAME: reduce using rule 18
-
-	for non-terminal m: go to state 54
-
-State 34
-	3    b_comparison: expression relop . expression
+State 32
+	36   s: 'call' id '(' . e_list ')'
 
 	for terminal '(': shift and go to state 31
 	for terminal '-': shift and go to state 24
 	for terminal CNAME: shift and go to state 11
 
+	for non-terminal e_list: go to state 54
 	for non-terminal expression: go to state 55
 	for non-terminal factor: go to state 19
 	for non-terminal id: go to state 20
 	for non-terminal negative: go to state 21
 	for non-terminal term: go to state 22
 
+State 33
+	3    b_and: b_and 'and' . m b_not
+
+	for terminal '(': reduce using rule 20
+	for terminal '-': reduce using rule 20
+	for terminal 'not': reduce using rule 20
+	for terminal CNAME: reduce using rule 20
+
+	for non-terminal m: go to state 56
+
+State 34
+	8    b_expr: b_expr 'or' . m b_and
+
+	for terminal '(': reduce using rule 20
+	for terminal '-': reduce using rule 20
+	for terminal 'not': reduce using rule 20
+	for terminal CNAME: reduce using rule 20
+
+	for non-terminal m: go to state 57
+
 State 35
-	12   expression: expression '+' . term
+	24   open_stmt: 'if' b_expr 'then' . m stmt
+	25   open_stmt: 'if' b_expr 'then' . m s n 'else' m open_stmt
+	32   s: 'if' b_expr 'then' . m s n 'else' m s
+
+	for terminal 'call': reduce using rule 20
+	for terminal 'if': reduce using rule 20
+	for terminal 'while': reduce using rule 20
+	for terminal '{': reduce using rule 20
+	for terminal CNAME: reduce using rule 20
+
+	for non-terminal m: go to state 58
+
+State 36
+	4    b_comparison: expression relop . expression
+
+	for terminal '(': shift and go to state 31
+	for terminal '-': shift and go to state 24
+	for terminal CNAME: shift and go to state 11
+
+	for non-terminal expression: go to state 59
+	for non-terminal factor: go to state 19
+	for non-terminal id: go to state 20
+	for non-terminal negative: go to state 21
+	for non-terminal term: go to state 22
+
+State 37
+	14   expression: expression '+' . term
 
 	for terminal '(': shift and go to state 31
 	for terminal CNAME: shift and go to state 11
 
 	for non-terminal factor: go to state 19
 	for non-terminal id: go to state 20
-	for non-terminal term: go to state 56
-
-State 36
-	26   relop: '<' .
-
-	for terminal '(': reduce using rule 26
-	for terminal '-': reduce using rule 26
-	for terminal CNAME: reduce using rule 26
-
-State 37
-	27   relop: '<=' .
-
-	for terminal '(': reduce using rule 27
-	for terminal '-': reduce using rule 27
-	for terminal CNAME: reduce using rule 27
+	for non-terminal term: go to state 60
 
 State 38
-	25   relop: '<>' .
-
-	for terminal '(': reduce using rule 25
-	for terminal '-': reduce using rule 25
-	for terminal CNAME: reduce using rule 25
-
-State 39
-	24   relop: '=' .
-
-	for terminal '(': reduce using rule 24
-	for terminal '-': reduce using rule 24
-	for terminal CNAME: reduce using rule 24
-
-State 40
-	28   relop: '>' .
+	28   relop: '<' .
 
 	for terminal '(': reduce using rule 28
 	for terminal '-': reduce using rule 28
 	for terminal CNAME: reduce using rule 28
 
-State 41
-	29   relop: '>=' .
+State 39
+	29   relop: '<=' .
 
 	for terminal '(': reduce using rule 29
 	for terminal '-': reduce using rule 29
 	for terminal CNAME: reduce using rule 29
 
+State 40
+	27   relop: '<>' .
+
+	for terminal '(': reduce using rule 27
+	for terminal '-': reduce using rule 27
+	for terminal CNAME: reduce using rule 27
+
+State 41
+	26   relop: '=' .
+
+	for terminal '(': reduce using rule 26
+	for terminal '-': reduce using rule 26
+	for terminal CNAME: reduce using rule 26
+
 State 42
-	39   term: term '*' . factor
+	30   relop: '>' .
+
+	for terminal '(': reduce using rule 30
+	for terminal '-': reduce using rule 30
+	for terminal CNAME: reduce using rule 30
+
+State 43
+	31   relop: '>=' .
+
+	for terminal '(': reduce using rule 31
+	for terminal '-': reduce using rule 31
+	for terminal CNAME: reduce using rule 31
+
+State 44
+	41   term: term '*' . factor
 
 	for terminal '(': shift and go to state 31
 	for terminal CNAME: shift and go to state 11
 
-	for non-terminal factor: go to state 57
+	for non-terminal factor: go to state 61
 	for non-terminal id: go to state 20
 
-State 43
-	5    b_comparison: '(' b_expr . ')'
-
-	for terminal ')': shift and go to state 58
-
-State 44
-	3    b_comparison: expression . relop expression
-	4    b_comparison: expression .
-	12   expression: expression . '+' term
-	14   factor: '(' expression . ')'
-
-	for terminal ')': shift and go to state 59, reduce using rule 4
-	for terminal '+': shift and go to state 35
-	for terminal '<': shift and go to state 36
-	for terminal '<=': shift and go to state 37
-	for terminal '<>': shift and go to state 38
-	for terminal '=': shift and go to state 39
-	for terminal '>': shift and go to state 40
-	for terminal '>=': shift and go to state 41
-
-	for non-terminal relop: go to state 34
-
 State 45
-	21   negative: '-' term .
-	39   term: term . '*' factor
+	6    b_comparison: '(' b_expr . ')'
+	8    b_expr: b_expr . 'or' m b_and
 
-	for terminal $end: reduce using rule 21
-	for terminal ')': reduce using rule 21
-	for terminal '*': shift and go to state 42
-	for terminal '+': reduce using rule 21
-	for terminal ',': reduce using rule 21
-	for terminal ';': reduce using rule 21
-	for terminal '<': reduce using rule 21
-	for terminal '<=': reduce using rule 21
-	for terminal '<>': reduce using rule 21
-	for terminal '=': reduce using rule 21
-	for terminal '>': reduce using rule 21
-	for terminal '>=': reduce using rule 21
-	for terminal 'do': reduce using rule 21
-	for terminal 'else': reduce using rule 21
-	for terminal 'then': reduce using rule 21
-	for terminal '}': reduce using rule 21
+	for terminal ')': shift and go to state 62
+	for terminal 'or': shift and go to state 34
 
 State 46
-	8    b_not: 'not' b_comparison .
+	4    b_comparison: expression . relop expression
+	5    b_comparison: expression .
+	14   expression: expression . '+' term
+	16   factor: '(' expression . ')'
 
-	for terminal ')': reduce using rule 8
-	for terminal 'do': reduce using rule 8
-	for terminal 'then': reduce using rule 8
+	for terminal ')': shift and go to state 63, reduce using rule 5
+	for terminal '+': shift and go to state 37
+	for terminal '<': shift and go to state 38
+	for terminal '<=': shift and go to state 39
+	for terminal '<>': shift and go to state 40
+	for terminal '=': shift and go to state 41
+	for terminal '>': shift and go to state 42
+	for terminal '>=': shift and go to state 43
+	for terminal 'and': reduce using rule 5
+	for terminal 'or': reduce using rule 5
+
+	for non-terminal relop: go to state 36
 
 State 47
-	33   s: 'while' m b_expr . 'do' m s
+	23   negative: '-' term .
+	41   term: term . '*' factor
 
-	for terminal 'do': shift and go to state 60
+	for terminal $end: reduce using rule 23
+	for terminal ')': reduce using rule 23
+	for terminal '*': shift and go to state 44
+	for terminal '+': reduce using rule 23
+	for terminal ',': reduce using rule 23
+	for terminal ';': reduce using rule 23
+	for terminal '<': reduce using rule 23
+	for terminal '<=': reduce using rule 23
+	for terminal '<>': reduce using rule 23
+	for terminal '=': reduce using rule 23
+	for terminal '>': reduce using rule 23
+	for terminal '>=': reduce using rule 23
+	for terminal 'and': reduce using rule 23
+	for terminal 'do': reduce using rule 23
+	for terminal 'else': reduce using rule 23
+	for terminal 'or': reduce using rule 23
+	for terminal 'then': reduce using rule 23
+	for terminal '}': reduce using rule 23
 
 State 48
-	16   l: l ';' . m s
+	10   b_not: 'not' b_not .
 
-	for terminal 'call': reduce using rule 18
-	for terminal 'if': reduce using rule 18
-	for terminal 'while': reduce using rule 18
-	for terminal '{': reduce using rule 18
-	for terminal CNAME: reduce using rule 18
-
-	for non-terminal m: go to state 61
+	for terminal ')': reduce using rule 10
+	for terminal 'and': reduce using rule 10
+	for terminal 'do': reduce using rule 10
+	for terminal 'or': reduce using rule 10
+	for terminal 'then': reduce using rule 10
 
 State 49
-	32   s: '{' l '}' .
+	8    b_expr: b_expr . 'or' m b_and
+	35   s: 'while' m b_expr . 'do' m s
 
-	for terminal $end: reduce using rule 32
-	for terminal ';': reduce using rule 32
-	for terminal 'else': reduce using rule 32
-	for terminal '}': reduce using rule 32
+	for terminal 'do': shift and go to state 64
+	for terminal 'or': shift and go to state 34
 
 State 50
-	30   s: 'if' b_expr . 'then' m s n 'else' m s
+	18   l: l ';' . m s
 
-	for terminal 'then': shift and go to state 62
+	for terminal 'call': reduce using rule 20
+	for terminal 'if': reduce using rule 20
+	for terminal 'while': reduce using rule 20
+	for terminal '{': reduce using rule 20
+	for terminal CNAME: reduce using rule 20
+
+	for non-terminal m: go to state 65
 
 State 51
-	12   expression: expression . '+' term
-	14   factor: '(' expression . ')'
+	34   s: '{' l '}' .
 
-	for terminal ')': shift and go to state 59
-	for terminal '+': shift and go to state 35
+	for terminal $end: reduce using rule 34
+	for terminal ';': reduce using rule 34
+	for terminal 'else': reduce using rule 34
+	for terminal '}': reduce using rule 34
 
 State 52
-	10   e_list: e_list . ',' expression
-	34   s: 'call' id '(' e_list . ')'
+	8    b_expr: b_expr . 'or' m b_and
+	32   s: 'if' b_expr . 'then' m s n 'else' m s
 
-	for terminal ')': shift and go to state 63
-	for terminal ',': shift and go to state 64
+	for terminal 'or': shift and go to state 34
+	for terminal 'then': shift and go to state 66
 
 State 53
-	9    e_list: expression .
-	12   expression: expression . '+' term
+	14   expression: expression . '+' term
+	16   factor: '(' expression . ')'
 
-	for terminal ')': reduce using rule 9
-	for terminal '+': shift and go to state 35
-	for terminal ',': reduce using rule 9
+	for terminal ')': shift and go to state 63
+	for terminal '+': shift and go to state 37
 
 State 54
-	22   open_stmt: 'if' b_expr 'then' m . stmt
-	23   open_stmt: 'if' b_expr 'then' m . s n 'else' m open_stmt
-	30   s: 'if' b_expr 'then' m . s n 'else' m s
+	12   e_list: e_list . ',' expression
+	36   s: 'call' id '(' e_list . ')'
+
+	for terminal ')': shift and go to state 67
+	for terminal ',': shift and go to state 68
+
+State 55
+	11   e_list: expression .
+	14   expression: expression . '+' term
+
+	for terminal ')': reduce using rule 11
+	for terminal '+': shift and go to state 37
+	for terminal ',': reduce using rule 11
+
+State 56
+	3    b_and: b_and 'and' m . b_not
+
+	for terminal '(': shift and go to state 23
+	for terminal '-': shift and go to state 24
+	for terminal 'not': shift and go to state 25
+	for terminal CNAME: shift and go to state 11
+
+	for non-terminal b_comparison: go to state 15
+	for non-terminal b_not: go to state 69
+	for non-terminal expression: go to state 18
+	for non-terminal factor: go to state 19
+	for non-terminal id: go to state 20
+	for non-terminal negative: go to state 21
+	for non-terminal term: go to state 22
+
+State 57
+	8    b_expr: b_expr 'or' m . b_and
+
+	for terminal '(': shift and go to state 23
+	for terminal '-': shift and go to state 24
+	for terminal 'not': shift and go to state 25
+	for terminal CNAME: shift and go to state 11
+
+	for non-terminal b_and: go to state 70
+	for non-terminal b_comparison: go to state 15
+	for non-terminal b_not: go to state 17
+	for non-terminal expression: go to state 18
+	for non-terminal factor: go to state 19
+	for non-terminal id: go to state 20
+	for non-terminal negative: go to state 21
+	for non-terminal term: go to state 22
+
+State 58
+	24   open_stmt: 'if' b_expr 'then' m . stmt
+	25   open_stmt: 'if' b_expr 'then' m . s n 'else' m open_stmt
+	32   s: 'if' b_expr 'then' m . s n 'else' m s
 
 	for terminal 'call': shift and go to state 7
 	for terminal 'if': shift and go to state 8
@@ -689,72 +781,27 @@ State 54
 	for non-terminal a: go to state 1
 	for non-terminal id: go to state 2
 	for non-terminal open_stmt: go to state 3
-	for non-terminal s: go to state 65
-	for non-terminal stmt: go to state 66
-
-State 55
-	3    b_comparison: expression relop expression .
-	12   expression: expression . '+' term
-
-	for terminal ')': reduce using rule 3
-	for terminal '+': shift and go to state 35
-	for terminal 'do': reduce using rule 3
-	for terminal 'then': reduce using rule 3
-
-State 56
-	12   expression: expression '+' term .
-	39   term: term . '*' factor
-
-	for terminal $end: reduce using rule 12
-	for terminal ')': reduce using rule 12
-	for terminal '*': shift and go to state 42
-	for terminal '+': reduce using rule 12
-	for terminal ',': reduce using rule 12
-	for terminal ';': reduce using rule 12
-	for terminal '<': reduce using rule 12
-	for terminal '<=': reduce using rule 12
-	for terminal '<>': reduce using rule 12
-	for terminal '=': reduce using rule 12
-	for terminal '>': reduce using rule 12
-	for terminal '>=': reduce using rule 12
-	for terminal 'do': reduce using rule 12
-	for terminal 'else': reduce using rule 12
-	for terminal 'then': reduce using rule 12
-	for terminal '}': reduce using rule 12
-
-State 57
-	39   term: term '*' factor .
-
-	for terminal $end: reduce using rule 39
-	for terminal ')': reduce using rule 39
-	for terminal '*': reduce using rule 39
-	for terminal '+': reduce using rule 39
-	for terminal ',': reduce using rule 39
-	for terminal ';': reduce using rule 39
-	for terminal '<': reduce using rule 39
-	for terminal '<=': reduce using rule 39
-	for terminal '<>': reduce using rule 39
-	for terminal '=': reduce using rule 39
-	for terminal '>': reduce using rule 39
-	for terminal '>=': reduce using rule 39
-	for terminal 'do': reduce using rule 39
-	for terminal 'else': reduce using rule 39
-	for terminal 'then': reduce using rule 39
-	for terminal '}': reduce using rule 39
-
-State 58
-	5    b_comparison: '(' b_expr ')' .
-
-	for terminal ')': reduce using rule 5
-	for terminal 'do': reduce using rule 5
-	for terminal 'then': reduce using rule 5
+	for non-terminal s: go to state 71
+	for non-terminal stmt: go to state 72
 
 State 59
-	14   factor: '(' expression ')' .
+	4    b_comparison: expression relop expression .
+	14   expression: expression . '+' term
+
+	for terminal ')': reduce using rule 4
+	for terminal '+': shift and go to state 37
+	for terminal 'and': reduce using rule 4
+	for terminal 'do': reduce using rule 4
+	for terminal 'or': reduce using rule 4
+	for terminal 'then': reduce using rule 4
+
+State 60
+	14   expression: expression '+' term .
+	41   term: term . '*' factor
 
 	for terminal $end: reduce using rule 14
 	for terminal ')': reduce using rule 14
-	for terminal '*': reduce using rule 14
+	for terminal '*': shift and go to state 44
 	for terminal '+': reduce using rule 14
 	for terminal ',': reduce using rule 14
 	for terminal ';': reduce using rule 14
@@ -764,24 +811,79 @@ State 59
 	for terminal '=': reduce using rule 14
 	for terminal '>': reduce using rule 14
 	for terminal '>=': reduce using rule 14
+	for terminal 'and': reduce using rule 14
 	for terminal 'do': reduce using rule 14
 	for terminal 'else': reduce using rule 14
+	for terminal 'or': reduce using rule 14
 	for terminal 'then': reduce using rule 14
 	for terminal '}': reduce using rule 14
 
-State 60
-	33   s: 'while' m b_expr 'do' . m s
-
-	for terminal 'call': reduce using rule 18
-	for terminal 'if': reduce using rule 18
-	for terminal 'while': reduce using rule 18
-	for terminal '{': reduce using rule 18
-	for terminal CNAME: reduce using rule 18
-
-	for non-terminal m: go to state 67
-
 State 61
-	16   l: l ';' m . s
+	41   term: term '*' factor .
+
+	for terminal $end: reduce using rule 41
+	for terminal ')': reduce using rule 41
+	for terminal '*': reduce using rule 41
+	for terminal '+': reduce using rule 41
+	for terminal ',': reduce using rule 41
+	for terminal ';': reduce using rule 41
+	for terminal '<': reduce using rule 41
+	for terminal '<=': reduce using rule 41
+	for terminal '<>': reduce using rule 41
+	for terminal '=': reduce using rule 41
+	for terminal '>': reduce using rule 41
+	for terminal '>=': reduce using rule 41
+	for terminal 'and': reduce using rule 41
+	for terminal 'do': reduce using rule 41
+	for terminal 'else': reduce using rule 41
+	for terminal 'or': reduce using rule 41
+	for terminal 'then': reduce using rule 41
+	for terminal '}': reduce using rule 41
+
+State 62
+	6    b_comparison: '(' b_expr ')' .
+
+	for terminal ')': reduce using rule 6
+	for terminal 'and': reduce using rule 6
+	for terminal 'do': reduce using rule 6
+	for terminal 'or': reduce using rule 6
+	for terminal 'then': reduce using rule 6
+
+State 63
+	16   factor: '(' expression ')' .
+
+	for terminal $end: reduce using rule 16
+	for terminal ')': reduce using rule 16
+	for terminal '*': reduce using rule 16
+	for terminal '+': reduce using rule 16
+	for terminal ',': reduce using rule 16
+	for terminal ';': reduce using rule 16
+	for terminal '<': reduce using rule 16
+	for terminal '<=': reduce using rule 16
+	for terminal '<>': reduce using rule 16
+	for terminal '=': reduce using rule 16
+	for terminal '>': reduce using rule 16
+	for terminal '>=': reduce using rule 16
+	for terminal 'and': reduce using rule 16
+	for terminal 'do': reduce using rule 16
+	for terminal 'else': reduce using rule 16
+	for terminal 'or': reduce using rule 16
+	for terminal 'then': reduce using rule 16
+	for terminal '}': reduce using rule 16
+
+State 64
+	35   s: 'while' m b_expr 'do' . m s
+
+	for terminal 'call': reduce using rule 20
+	for terminal 'if': reduce using rule 20
+	for terminal 'while': reduce using rule 20
+	for terminal '{': reduce using rule 20
+	for terminal CNAME: reduce using rule 20
+
+	for non-terminal m: go to state 73
+
+State 65
+	18   l: l ';' m . s
 
 	for terminal 'call': shift and go to state 7
 	for terminal 'if': shift and go to state 29
@@ -791,136 +893,155 @@ State 61
 
 	for non-terminal a: go to state 1
 	for non-terminal id: go to state 2
-	for non-terminal s: go to state 68
+	for non-terminal s: go to state 74
 
-State 62
-	30   s: 'if' b_expr 'then' . m s n 'else' m s
+State 66
+	32   s: 'if' b_expr 'then' . m s n 'else' m s
 
-	for terminal 'call': reduce using rule 18
-	for terminal 'if': reduce using rule 18
-	for terminal 'while': reduce using rule 18
-	for terminal '{': reduce using rule 18
-	for terminal CNAME: reduce using rule 18
+	for terminal 'call': reduce using rule 20
+	for terminal 'if': reduce using rule 20
+	for terminal 'while': reduce using rule 20
+	for terminal '{': reduce using rule 20
+	for terminal CNAME: reduce using rule 20
 
-	for non-terminal m: go to state 69
+	for non-terminal m: go to state 75
 
-State 63
-	34   s: 'call' id '(' e_list ')' .
+State 67
+	36   s: 'call' id '(' e_list ')' .
 
-	for terminal $end: reduce using rule 34
-	for terminal ';': reduce using rule 34
-	for terminal 'else': reduce using rule 34
-	for terminal '}': reduce using rule 34
+	for terminal $end: reduce using rule 36
+	for terminal ';': reduce using rule 36
+	for terminal 'else': reduce using rule 36
+	for terminal '}': reduce using rule 36
 
-State 64
-	10   e_list: e_list ',' . expression
+State 68
+	12   e_list: e_list ',' . expression
 
 	for terminal '(': shift and go to state 31
 	for terminal '-': shift and go to state 24
 	for terminal CNAME: shift and go to state 11
 
-	for non-terminal expression: go to state 70
+	for non-terminal expression: go to state 76
 	for non-terminal factor: go to state 19
 	for non-terminal id: go to state 20
 	for non-terminal negative: go to state 21
 	for non-terminal term: go to state 22
 
-State 65
-	23   open_stmt: 'if' b_expr 'then' m s . n 'else' m open_stmt
-	30   s: 'if' b_expr 'then' m s . n 'else' m s
-	36   stmt: s .
-
-	for terminal $end: reduce using rule 36
-	for terminal 'else': reduce using rule 19
-
-	for non-terminal n: go to state 71
-
-State 66
-	22   open_stmt: 'if' b_expr 'then' m stmt .
-
-	for terminal $end: reduce using rule 22
-
-State 67
-	33   s: 'while' m b_expr 'do' m . s
-
-	for terminal 'call': shift and go to state 7
-	for terminal 'if': shift and go to state 29
-	for terminal 'while': shift and go to state 9
-	for terminal '{': shift and go to state 10
-	for terminal CNAME: shift and go to state 11
-
-	for non-terminal a: go to state 1
-	for non-terminal id: go to state 2
-	for non-terminal s: go to state 72
-
-State 68
-	16   l: l ';' m s .
-
-	for terminal ';': reduce using rule 16
-	for terminal '}': reduce using rule 16
-
 State 69
-	30   s: 'if' b_expr 'then' m . s n 'else' m s
+	3    b_and: b_and 'and' m b_not .
 
-	for terminal 'call': shift and go to state 7
-	for terminal 'if': shift and go to state 29
-	for terminal 'while': shift and go to state 9
-	for terminal '{': shift and go to state 10
-	for terminal CNAME: shift and go to state 11
-
-	for non-terminal a: go to state 1
-	for non-terminal id: go to state 2
-	for non-terminal s: go to state 73
+	for terminal ')': reduce using rule 3
+	for terminal 'and': reduce using rule 3
+	for terminal 'do': reduce using rule 3
+	for terminal 'or': reduce using rule 3
+	for terminal 'then': reduce using rule 3
 
 State 70
-	10   e_list: e_list ',' expression .
-	12   expression: expression . '+' term
+	3    b_and: b_and . 'and' m b_not
+	8    b_expr: b_expr 'or' m b_and .
 
-	for terminal ')': reduce using rule 10
-	for terminal '+': shift and go to state 35
-	for terminal ',': reduce using rule 10
+	for terminal ')': reduce using rule 8
+	for terminal 'and': shift and go to state 33
+	for terminal 'do': reduce using rule 8
+	for terminal 'or': reduce using rule 8
+	for terminal 'then': reduce using rule 8
 
 State 71
-	23   open_stmt: 'if' b_expr 'then' m s n . 'else' m open_stmt
-	30   s: 'if' b_expr 'then' m s n . 'else' m s
+	25   open_stmt: 'if' b_expr 'then' m s . n 'else' m open_stmt
+	32   s: 'if' b_expr 'then' m s . n 'else' m s
+	38   stmt: s .
 
-	for terminal 'else': shift and go to state 74
+	for terminal $end: reduce using rule 38
+	for terminal 'else': reduce using rule 21
+
+	for non-terminal n: go to state 77
 
 State 72
-	33   s: 'while' m b_expr 'do' m s .
+	24   open_stmt: 'if' b_expr 'then' m stmt .
 
-	for terminal $end: reduce using rule 33
-	for terminal ';': reduce using rule 33
-	for terminal 'else': reduce using rule 33
-	for terminal '}': reduce using rule 33
+	for terminal $end: reduce using rule 24
 
 State 73
-	30   s: 'if' b_expr 'then' m s . n 'else' m s
+	35   s: 'while' m b_expr 'do' m . s
 
-	for terminal 'else': reduce using rule 19
+	for terminal 'call': shift and go to state 7
+	for terminal 'if': shift and go to state 29
+	for terminal 'while': shift and go to state 9
+	for terminal '{': shift and go to state 10
+	for terminal CNAME: shift and go to state 11
 
-	for non-terminal n: go to state 75
+	for non-terminal a: go to state 1
+	for non-terminal id: go to state 2
+	for non-terminal s: go to state 78
 
 State 74
-	23   open_stmt: 'if' b_expr 'then' m s n 'else' . m open_stmt
-	30   s: 'if' b_expr 'then' m s n 'else' . m s
+	18   l: l ';' m s .
 
-	for terminal 'call': reduce using rule 18
-	for terminal 'if': reduce using rule 18
-	for terminal 'while': reduce using rule 18
-	for terminal '{': reduce using rule 18
-	for terminal CNAME: reduce using rule 18
-
-	for non-terminal m: go to state 76
+	for terminal ';': reduce using rule 18
+	for terminal '}': reduce using rule 18
 
 State 75
-	30   s: 'if' b_expr 'then' m s n . 'else' m s
+	32   s: 'if' b_expr 'then' m . s n 'else' m s
 
-	for terminal 'else': shift and go to state 77
+	for terminal 'call': shift and go to state 7
+	for terminal 'if': shift and go to state 29
+	for terminal 'while': shift and go to state 9
+	for terminal '{': shift and go to state 10
+	for terminal CNAME: shift and go to state 11
+
+	for non-terminal a: go to state 1
+	for non-terminal id: go to state 2
+	for non-terminal s: go to state 79
 
 State 76
-	23   open_stmt: 'if' b_expr 'then' m s n 'else' m . open_stmt
-	30   s: 'if' b_expr 'then' m s n 'else' m . s
+	12   e_list: e_list ',' expression .
+	14   expression: expression . '+' term
+
+	for terminal ')': reduce using rule 12
+	for terminal '+': shift and go to state 37
+	for terminal ',': reduce using rule 12
+
+State 77
+	25   open_stmt: 'if' b_expr 'then' m s n . 'else' m open_stmt
+	32   s: 'if' b_expr 'then' m s n . 'else' m s
+
+	for terminal 'else': shift and go to state 80
+
+State 78
+	35   s: 'while' m b_expr 'do' m s .
+
+	for terminal $end: reduce using rule 35
+	for terminal ';': reduce using rule 35
+	for terminal 'else': reduce using rule 35
+	for terminal '}': reduce using rule 35
+
+State 79
+	32   s: 'if' b_expr 'then' m s . n 'else' m s
+
+	for terminal 'else': reduce using rule 21
+
+	for non-terminal n: go to state 81
+
+State 80
+	25   open_stmt: 'if' b_expr 'then' m s n 'else' . m open_stmt
+	32   s: 'if' b_expr 'then' m s n 'else' . m s
+
+	for terminal 'call': reduce using rule 20
+	for terminal 'if': reduce using rule 20
+	for terminal 'while': reduce using rule 20
+	for terminal '{': reduce using rule 20
+	for terminal CNAME: reduce using rule 20
+
+	for non-terminal m: go to state 82
+
+State 81
+	32   s: 'if' b_expr 'then' m s n . 'else' m s
+
+	for terminal 'else': shift and go to state 83
+
+State 82
+	25   open_stmt: 'if' b_expr 'then' m s n 'else' m . open_stmt
+	32   s: 'if' b_expr 'then' m s n 'else' m . s
 
 	for terminal 'call': shift and go to state 7
 	for terminal 'if': shift and go to state 8
@@ -930,35 +1051,35 @@ State 76
 
 	for non-terminal a: go to state 1
 	for non-terminal id: go to state 2
-	for non-terminal open_stmt: go to state 78
-	for non-terminal s: go to state 79
+	for non-terminal open_stmt: go to state 84
+	for non-terminal s: go to state 85
 
-State 77
-	30   s: 'if' b_expr 'then' m s n 'else' . m s
+State 83
+	32   s: 'if' b_expr 'then' m s n 'else' . m s
 
-	for terminal 'call': reduce using rule 18
-	for terminal 'if': reduce using rule 18
-	for terminal 'while': reduce using rule 18
-	for terminal '{': reduce using rule 18
-	for terminal CNAME: reduce using rule 18
+	for terminal 'call': reduce using rule 20
+	for terminal 'if': reduce using rule 20
+	for terminal 'while': reduce using rule 20
+	for terminal '{': reduce using rule 20
+	for terminal CNAME: reduce using rule 20
 
-	for non-terminal m: go to state 80
+	for non-terminal m: go to state 86
 
-State 78
-	23   open_stmt: 'if' b_expr 'then' m s n 'else' m open_stmt .
+State 84
+	25   open_stmt: 'if' b_expr 'then' m s n 'else' m open_stmt .
 
-	for terminal $end: reduce using rule 23
+	for terminal $end: reduce using rule 25
 
-State 79
-	30   s: 'if' b_expr 'then' m s n 'else' m s .
+State 85
+	32   s: 'if' b_expr 'then' m s n 'else' m s .
 
-	for terminal $end: reduce using rule 30
-	for terminal ';': reduce using rule 30
-	for terminal 'else': reduce using rule 30
-	for terminal '}': reduce using rule 30
+	for terminal $end: reduce using rule 32
+	for terminal ';': reduce using rule 32
+	for terminal 'else': reduce using rule 32
+	for terminal '}': reduce using rule 32
 
-State 80
-	30   s: 'if' b_expr 'then' m s n 'else' m . s
+State 86
+	32   s: 'if' b_expr 'then' m s n 'else' m . s
 
 	for terminal 'call': shift and go to state 7
 	for terminal 'if': shift and go to state 29
@@ -968,4 +1089,4 @@ State 80
 
 	for non-terminal a: go to state 1
 	for non-terminal id: go to state 2
-	for non-terminal s: go to state 79
+	for non-terminal s: go to state 85

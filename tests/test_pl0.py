@@ -110,6 +110,10 @@ def test_bool_or(parser):
     result = parser(code)
     assert result == ['j>, a, b, 4', 'j, -, -, 2', 'j<=, c, d, 6', 'j, -, -, 4', 'j<>, e, f, 6', 'j, -, -, 7', 'g := h']
 
+def test_bool_mult(parser):
+    code = "if not not not a > b then c := d"
+    result = parser(code)
+    assert result == ['j>, a, b, 3', 'j, -, -, 2', 'c := d']
 
 def test_bool(parser):
     code = "if not (a > b and c or d) or not e <> f and not g then h := i"
