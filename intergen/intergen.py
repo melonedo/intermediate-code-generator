@@ -283,7 +283,7 @@ with open('parsing-table.csv', newline='') as csvfile:
 with open('productions.json') as f:
     productions = json.load(f)
 
-terminals = frozenset(["'('", "')'", "'*'", "'+'", "','", "'-'", "':='", "';'", "'<'", "'<='", "'<>'", "'='", "'>'", "'>='", "'call'", "'do'", "'else'", "'if'", "'not'", "'then'", "'while'", "'{'", "'}'"])
+terminals = frozenset(["'('", "')'", "'*'", "'+'", "','", "'-'", "':='", "';'", "'<'", "'<='", "'<>'", "'='", "'>'", "'>='", "'and'", "'call'", "'do'", "'else'", "'if'", "'not'", "'or'", "'then'", "'while'", "'{'", "'}'"])
 
 terminals_to_keep = frozenset(["'<'", "'<='", "'<>'", "'='", "'>'", "'>='"])
 
