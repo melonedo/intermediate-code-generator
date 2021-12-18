@@ -1,11 +1,13 @@
 [
   ["$accept", 1, "$accept"],
   ["a", 3, "a"],
-  ["b_and", 1, "bool_and"],
+  ["b_and", 1, "bool_trans"],
+  ["b_and", 4, "bool_and"],
   ["b_comparison", 3, "bool_expression_relop_expression"],
   ["b_comparison", 1, "bool_expression"],
   ["b_comparison", 3, "bool_trans"],
-  ["b_expr", 1, "bool_or"],
+  ["b_expr", 1, "bool_trans"],
+  ["b_expr", 4, "bool_or"],
   ["b_not", 1, "bool_trans"],
   ["b_not", 2, "bool_not"],
   ["e_list", 1, "call_init"],
@@ -38,7 +40,5 @@
   ["stmt", 1, "stmt"],
   ["stmt", 1, "stmt"],
   ["term", 1, "expression_num"],
-  ["term", 3, "expression_mutiply"],
-  ["open_stmt",5,"s_if"],
-  ["open_stmt",9,"s_if_else_open"]
+  ["term", 3, "expression_mutiply"]
 ]
