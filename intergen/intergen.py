@@ -16,8 +16,8 @@ pl0_grammar3 = """
         | "{" l "}"
         | "while"i m b_expr "do"i m s            -> s_while
         | "call"i id "(" e_list ")"              -> s_call
-        | label s                                -> s_label_s              
-        | "goto"i label                          -> s_goto
+        | label s                                -> s_label_s                       
+        | "goto"i id                             -> s_goto
 
     open_stmt: "if"i b_expr "then"i m stmt               -> s_if
         | "if"i b_expr "then"i m s n "else"i m open_stmt -> s_if_else_open
@@ -208,37 +208,37 @@ class Pl0Tree(Transformer):
         return s
 
     def s_label(self, id):
-        if id.name not in self.symbol_table:
-            label = struct()
-            label.name, label.type, label.isdefined, label.place = id.name, 'label', 'defined', self.next_quad
-            self.symbol_table[id.name] = label
-            return label
-        elif id.name in self.symbol_table:
-            label = self.symbol_table[id.name]
-            if not isinstance(label, struct) or label.type != 'label' or label.isdefined == 'defined':
+        if id.name in self.symbol_table:
+            entry = self.symbol_table[id.name]
+            if entry.type != "label" or entry.defined:
                 raise GrammarError()
             else:
-                label.isdefined = 'defined'
-                self.backpatch(label.place, self.next_quad)
-                label.place = self.next_quad
-                return label
-    
-    def s_goto(self, label):
-        print("hh", label)
-        if label.name in self.symbol_table:
-            if label.isdefined == "defined":
-                self.emit(f"j, -, -, {label.place}")
-            elif label.isdefined == "not defined":
-                pass
-            else:
-                self.emit(f"j, -, -, {label.place}")
-                label.place = self.next_quad
+                entry.defined = True
+                self.backpatch(entry.quad_list, self.next_quad)
         else:
-            label = struct()
-            label.name, label.type, label.isdefined, label.place = id.name, 'label', 'not defined', self.next_quad
-            self.symbol_table[id.name] = label
-            self.emit(f"j, -, -, 0")
-            return label
+            entry = struct(type="label", defined=True, place=self.next_quad)
+            self.symbol_table[id.name] = entry
+    
+    def s_goto(self, id):
+        if id.name in self.symbol_table:
+            entry = self.symbol_table[id.name]
+            if entry.type == "label":
+                if entry.defined:
+                    self.emit(f"j, -, -, {entry.place}")
+                else:
+                    entry.quad_list.append(self.next_quad)
+                    self.emit("j, -, -, 0")
+            else:
+                raise GrammarError()
+        else:
+            quad_list = self.makelist(self.next_quad)
+            entry = struct(type="label", defined=False, quad_list=quad_list)
+            self.symbol_table[id.name] = entry
+            self.emit("j, -, -, 0")
+
+        s = struct()
+        s.nextlist = self.makelist()
+        return s
     
     def s_label_s(self, id, s):
         return s
