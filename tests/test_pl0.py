@@ -1,4 +1,4 @@
-from intergen.intergen import get_parser
+from intergen.intergen import get_parser, GrammarError
 import pytest
 
 
@@ -163,3 +163,28 @@ def test_call2(parser):
     code = "call f ( a , x + y )"
     result = parser(code)
     assert result == ['temp0 := x + y', 'param a', 'param temp0', 'call f']
+
+def test_goto(parser):
+    code = "{ l : a := b ; goto l }"
+    result = parser(code)
+    assert result == ['a := b', 'j, -, -, 0']
+
+def test_goto1(parser):
+    code = "{ d := c ; l : a := b ; goto l }"
+    result = parser(code)
+    assert result == ['d := c', 'a := b', 'j, -, -, 1']
+
+def test_goto2(parser):
+    code = "{ b := a ; goto l ; l : a := b }"
+    result = parser(code)
+    assert result == ['b := a', 'j, -, -, 2', 'a := b']
+
+def test_label_error(parser):
+    code = "{ l : a := b ; l : c := d }"
+    with pytest.raises(GrammarError):
+        parser(code)
+
+def test_goto_variable(parser):
+    code = "{ a := b ; goto a }"
+    with pytest.raises(GrammarError):
+        parser(code)

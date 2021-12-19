@@ -2,6 +2,7 @@ from typing import ValuesView
 from lark import Lark, Transformer, v_args
 import csv
 import json
+from lark.exceptions import ParseError
 
 from lark.load_grammar import Grammar
 
@@ -13,10 +14,10 @@ pl0_grammar3 = """
 
     s:  "if"i b_expr "then"i m s n "else"i m s   -> s_if_else
         | a                                      -> s_a
-        | "{" l "}"
+        | "{" l "}"                              -> s_brackets
         | "while"i m b_expr "do"i m s            -> s_while
         | "call"i id "(" e_list ")"              -> s_call
-        | label s                                -> s_label_s                       
+        | label s                                -> s_label_s
         | "goto"i id                             -> s_goto
 
     open_stmt: "if"i b_expr "then"i m stmt               -> s_if
@@ -55,8 +56,8 @@ pl0_grammar3 = """
         | expression                           -> bool_expression
         | "(" b_expr ")"                       -> bool_trans
 
-    l:  l ";" m s
-        | s
+    l:  l ";" m s                              -> s_semicolon
+        | s                                    -> s_semicolon_s
         
     e_list: expression                   -> call_init     
         | e_list "," expression          -> call_add
@@ -77,6 +78,8 @@ class struct(object):
 class GrammarError(Exception):
     pass
 
+class ParsingError(Exception):
+    pass
 
 @v_args(inline=True)
 class Pl0Tree(Transformer):
@@ -91,9 +94,10 @@ class Pl0Tree(Transformer):
         self.next_quad = 0
         self.codes = []
 
-    def lookup(self, id):
+    def lookup(self, id, **kwargs):
         if id not in self.symbol_table:
-            self.symbol_table[id] = id
+            s = struct(**kwargs)
+            self.symbol_table[id] = s
             # self.symbol_counter += 1
         return self.symbol_table[id]
 
@@ -127,17 +131,17 @@ class Pl0Tree(Transformer):
         return i
 
     def a(self, id, E):
-        p = self.lookup(id.name)
+        p = self.lookup(id.name, type="variable", place=id.name)
         if p is not None:
-            self.emit(f"{p} := {E.place}")
+            self.emit(f"{p.place} := {E.place}")
         else:
             raise GrammarError()
 
     def expression_id(self, id):
         e = struct()
-        p = self.lookup(id.name)
+        p = self.lookup(id.name, type="variable", place=id.name)
         if p is not None:
-            e.place = p
+            e.place = p.place
             return e
         else:
             raise GrammarError()
@@ -239,9 +243,6 @@ class Pl0Tree(Transformer):
         s = struct()
         s.nextlist = self.makelist()
         return s
-    
-    def s_label_s(self, id, s):
-        return s
 
     def m(self):
         m = struct()
@@ -281,6 +282,22 @@ class Pl0Tree(Transformer):
         e.place = self.newtemp()
         self.emit(f"{e.place} := {e1.place} * {factor.place}")
         return e
+
+    def s_label_s(self,id,s):
+        return s
+
+    def s_brackets(self, s):
+        return s
+
+    def s_semicolon(self,l,m,s):
+        self.backpatch(l.nextlist,m.quad)
+        l.nextlist = s.nextlist
+        return l
+
+    def s_semicolon_s(self,s):
+        l = struct()
+        l.nextlist = s.nextlist
+        return l
 
     def s_while(self, m1, b, m2, s1):
         s = struct()
@@ -323,7 +340,7 @@ with open('parsing-table.csv', newline='') as csvfile:
 with open('productions.json') as f:
     productions = json.load(f)
 
-terminals = frozenset(["'('", "')'", "'*'", "'+'", "','", "'-'", "':='", "';'", "'<'", "'<='", "'<>'", "'='", "'>'", "'>='", "'and'", "'call'", "'do'", "'else'", "'if'", "'not'", "'or'", "'then'", "'while'", "'{'", "'}'"])
+terminals = frozenset(["'('", "')'", "'*'", "'+'", "','", "'-'", "':'", "':='", "';'", "'<'", "'<='", "'<>'", "'='", "'>'", "'>='", "'and'", "'call'", "'do'", "'else'", "'goto'", "'if'", "'not'", "'or'", "'then'", "'while'", "'{'", "'}'"])
 
 terminals_to_keep = frozenset(["'<'", "'<='", "'<>'", "'='", "'>'", "'>='"])
 
@@ -381,4 +398,4 @@ class PL0Parser(Pl0Tree):
                 assert len(value_stack) == 1
                 return value_stack[0]
             else:
-                raise GrammarError()
+                raise ParseError()
