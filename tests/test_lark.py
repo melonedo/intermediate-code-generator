@@ -9,8 +9,9 @@ def test_calc():
 
 def test_pl0():
     code = """
-        if x > 0 then A := x + d
+        if x > e then { A := x + d ; C := x }
         else B := c
     """
-    parse = get_parser()
-    parse(code)
+    parse = get_parser(False)
+    result = parse(code)
+    print(result.pretty())

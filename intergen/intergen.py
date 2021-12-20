@@ -107,7 +107,7 @@ class Pl0Tree(Transformer):
 
     def makelist(self, *args):
         return [*args]
-    
+
     def merge(self, l1, l2):
         return [*l1, *l2]
 
@@ -116,7 +116,7 @@ class Pl0Tree(Transformer):
             old_code = self.codes[i]
             new_code = old_code[:-1] + str(quad)
             self.codes[i] = new_code
-    
+
     def newtemp(self):
         self.symbol_counter += 1
         return f"temp{self.symbol_counter}"
@@ -145,7 +145,7 @@ class Pl0Tree(Transformer):
             return e
         else:
             raise GrammarError()
-    
+
     def relop(self, r):
         e = struct()
         e.op = r
@@ -157,20 +157,20 @@ class Pl0Tree(Transformer):
         b.truelist = self.merge(b1.truelist, b2.truelist)
         b.falselist = b2.falselist
         return b
-    
+
     def bool_and(self, b1, m, b2):
         b = struct()
         self.backpatch(b1.truelist, m.quad)
         b.truelist = b2.truelist
         b.falselist = self.merge(b1.falselist, b2.falselist)    
         return b
-    
+
     def bool_not(self, b1):
         b = struct()
         b.truelist = b1.falselist
         b.falselist = b1.truelist
         return b
-    
+
     def bool_trans(self, b1):
         b = struct()
         b.truelist = b1.truelist
@@ -184,7 +184,7 @@ class Pl0Tree(Transformer):
         self.emit(f"j{r.op}, {e1.place}, {e2.place}, 0")
         self.emit(f"j, -, -, 0")
         return b
-    
+
     def bool_expression(self, i):
         b = struct()
         b.truelist = self.makelist(self.next_quad)
@@ -198,7 +198,7 @@ class Pl0Tree(Transformer):
         self.backpatch(b.truelist, m.quad)
         s.nextlist = self.merge(b.falselist, s1.nextlist)
         return s
-    
+
     def s_if_else(self, b, m1, s1, n, m2, s2):
         s = struct()
         self.backpatch(b.truelist, m1.quad)
@@ -248,19 +248,19 @@ class Pl0Tree(Transformer):
         m = struct()
         m.quad = self.next_quad
         return m
-    
+
     def n(self):
         n = struct()
         n.nextlist = self.makelist(self.next_quad)
         self.emit(f"j, -, -, 0")
         return n
-    
+
     def expression_add(self,e1,e2):
         e = struct()
         e.place = self.newtemp()
         self.emit(f"{e.place} := {e1.place} + {e2.place}")
         return e
-    
+
     def expression_negative(self,e1):
         e = struct()
         e.place = self.newtemp()
@@ -324,9 +324,8 @@ class Pl0Tree(Transformer):
         return e_list
 
 def get_parser(transform=True):
-    transformer = Pl0Tree() if transform else None
     # pl0_parser = Lark(pl0_grammar3, parser='lalr', transformer=transformer)
-    pl0_parser = PL0Parser()
+    pl0_parser = PL0Parser() if transform else Lark(pl0_grammar3, parser='lalr', transformer=None)
     parser = pl0_parser.parse
     return parser
 
