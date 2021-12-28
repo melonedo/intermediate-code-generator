@@ -217,25 +217,31 @@ class Pl0Tree(Transformer):
             if entry.type != "label" or entry.defined:
                 raise GrammarError()
             else:
+                # “地址栏”中此时为链表
                 entry.defined = True
+                # “地址栏”中此后为跳转地址
                 self.backpatch(entry.quad_list, self.next_quad)
         else:
+            # “地址栏”中为跳转地址
             entry = struct(type="label", defined=True, place=self.next_quad)
             self.symbol_table[id.name] = entry
-    
+
     def s_goto(self, id):
         if id.name in self.symbol_table:
             entry = self.symbol_table[id.name]
             if entry.type == "label":
                 if entry.defined:
+                    # “地址栏”中为跳转地址
                     self.emit(f"j, -, -, {entry.place}")
                 else:
+                    # “地址栏”中为回填链表
                     entry.quad_list.append(self.next_quad)
                     self.emit("j, -, -, 0")
             else:
                 raise GrammarError()
         else:
             quad_list = self.makelist(self.next_quad)
+            # “地址栏”中为回填链表
             entry = struct(type="label", defined=False, quad_list=quad_list)
             self.symbol_table[id.name] = entry
             self.emit("j, -, -, 0")
