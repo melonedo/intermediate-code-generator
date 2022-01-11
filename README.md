@@ -1,11 +1,12 @@
 # intermediate-code-generator
-[![CI](https://github.com/melonedo/intermediate-code-generator/actions/workflows/app.yaml/badge.svg)](https://github.com/melonedo/intermediate-code-generator/actions/workflows/app.yaml/)
+[![CI](https://github.com/melonedo/intermediate-code-generator/actions/workflows/app.yaml/badge.svg)](https://github.com/melonedo/intermediate-code-generator/actions/workflows/app.yaml/)[实验报告](report/编译原理实验报告.md)
 
-2021 Compiler principles group design
+2021编译原理实验
 
 ## 运行测试
-如果使用pipenv，则
+如果使用[pipenv](https://pipenv.pypa.io/en/latest/)，则
 ```shell
+# pip install pipenv
 pipenv install --dev
 pipenv shell
 pytest
@@ -24,3 +25,7 @@ git submodule update
 pipenv shell
 py intergen/tablegen.py
 ```
+
+## 不足
+- if-else部分采用的消歧义方法使得if实际上不能嵌套，直接用二义语法然后手动消歧义应该会更好。
+- 不能自动生成LR分析表需要的产生式表。
